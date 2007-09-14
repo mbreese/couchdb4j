@@ -41,8 +41,7 @@ public class DocumentTest {
 		obj.accumulate("array", "ar1");
 		obj.accumulate("array", "ar2");
 		obj.accumulate("array", "ar3");
-		Document doc = new Document();
-		doc.load(obj);
+		Document doc = new Document(obj);
 		foo.saveDocument(doc,"foodoc");
 
 		Document foodoc = foo.getDocumentWithRevisions("foodoc");
@@ -87,7 +86,7 @@ public class DocumentTest {
 
 	@Test
 	public void list1() {
-		View one = new View(foo,"_all_docs");
+		View one = new View("_all_docs");
 		one.setCount(1);
 		assertEquals(foo.view(one).getResults().size(),1 );
 	}
