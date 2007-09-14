@@ -1,3 +1,19 @@
+/*
+   Copyright 2007 Fourspaces Consulting, LLC
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.fourspaces.couchdb;
 
 import java.util.Collection;
@@ -12,45 +28,84 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
-public class Document {
+/**
+ * Everything in CouchDB is a Document.  In this case, the document is an object backed by a 
+ * JSONObject.  The Document is also aware of the database that it is connected to.  This allows
+ * the Document to reload it's properties when needed.  The only special fields are "_id", "_rev", 
+ * "_revisions", and "_view_*".
+ * <p>
+ * All document have an _id and a _rev.  If this is a new document those fields are populated when
+ * they are saved to the CouchDB server.
+ * <p>
+ * _revisions is only populated if the document has been retrieved via database.getDocumentWithRevisions();
+ * So, if this document wasn't, then when you call document.getRevisions(), it will go back to the server
+ * to reload itself via database.getDocumentWithRevisions().
+ * <p>
+ * The Document can be treated like a JSONObject, eventhough it doesn't extend JSONObject (it's final).
+ * <p>
+ * You can also get/set values by calling document.get(key), document.put(key,value), just like a Map.
+ * <p>
+ * You can get a handle on the backing JSONObject by calling document.getJSONObject();  If this hasn't
+ * been loaded yet, it will load the data itself using the given database connection.
+ * <p>
+ * If you got this Document from a view, you are likely missing elements.  To load them you can call
+ * document.load().
+ * 
+ * @author mbreese
+ *
+ */
+public class Document implements Map {
 	Log log = LogFactory.getLog(Document.class);
 	protected Database database=null;
 	protected JSONObject object;
 	
 	boolean loaded = false;
 	
+	/**
+	 * Create a new Document
+	 *
+	 */
 	public Document () {
 		this.object = new JSONObject();
 	}
+	/**
+	 * Create a new Document from a JSONObject
+	 * @param obj
+	 */
 	public Document (JSONObject obj) {
 		this.object = obj;
 		loaded=true;
 	}
 	
-	public Document (Database database) {
-		this.database=database;
-		this.object = new JSONObject();
-	}
-	
-	public Document (String id, String rev, Database database) {
-		setId(id);
-		setRev(rev);
-		this.database=database;
-		this.object = new JSONObject();
-	}
-	
-	public void load(JSONObject object2) {
+	/**
+	 * Load data into this document from a differing JSONObject 
+	 * <p>
+	 * This is mainly for reloading data for an object that was retrieved from a view.  This version
+	 * doesn't overwrite any unsaved data that is currently present in this object.
+	 * 
+	 * @param object2
+	 */	
+	protected void load(JSONObject object2) {
 		if (!loaded) {
 			object.putAll(object2);
 			loaded=true;
 		}
 	}
+	
+	/**
+	 * This document's id (if saved)
+	 * @return
+	 */
 	public String getId() {
 		return object.optString("_id");
 	}
 	public void setId(String id)  {
 		object.put("_id",id);
 	}
+	/**
+	 * This document's Revision (if saved)
+	 * @return
+	 */
 	public String getRev()  {
 		return object.optString("_rev");
 	}
@@ -58,10 +113,18 @@ public class Document {
 		object.put("_rev", rev);
 	}
 	
+	/**
+	 * A list of the revision numbers that this document has.  If this hasn't been 
+	 * populated with a "full=true" query, then the database will be requeried
+	 * @return
+	 */
 	public String[] getRevisions() {
 		String[] revs = null;
-		if (object.has("_revisions")) {
-			JSONArray ar = object.getJSONArray("_revisions");
+		if (!object.has("_revisions")) {
+			populateRevisions();
+		} 
+		JSONArray ar = object.getJSONArray("_revisions");
+		if (ar!=null) {
 			revs = new String[ar.size()];
 			for (int i=0 ; i< ar.size(); i++) {
 				revs[i]=ar.getString(i);
@@ -70,47 +133,76 @@ public class Document {
 		return revs;
 	}
 	
-//	public JSONObject getValue()  {
-//		if (!object.has("value") && database!=null && getId()!=null&& !getId().equals("")) {
-//			log.info("Retriving document value for: "+getId());
-//			Document doc = database.getDocument(getId());
-//			setValue(doc.getValue());
-//		} else if (!object.has("value")) {
-//			object.put("value", new JSONObject());
-//		}
-//		return object.getJSONObject("value");
-//	}
-//	public void setValue(JSONObject value)  {
-//		object.put("value", value);
-//	}
-	
+	/**
+	 * Get a named view that is stored in the document.
+	 * @param name
+	 * @return
+	 */
 	public View getView(String name) {
 		View view = null;
 		if (object.has("_view_"+name)) {
-			view = new View(database,this,name);
+			view = new View(this,name);
 		}
 		return view;
 	}
 	
+	/**
+	 * Add a view to this document.  If a view function already exists with the given viewName
+	 * it is overwritten.
+	 * <p>
+	 * This isn't persisted until the document is saved.
+	 * 
+	 * @param viewName
+	 * @param function
+	 * @return
+	 */
 	public View addView(String viewName, String function) {
-		View view = new View(database,this,viewName, "\""+function+"\"");
+		View view = new View(this,viewName, "\""+function+"\"");
 		object.put("_view_"+viewName, "\""+function+"\"");
 		return view;
 	}
 	
+	/**
+	 * Removes a view from this document.
+	 * <p>
+	 * This isn't persisted until the document is saved.
+	 * @param viewName
+	 */
 	public void deleteView(String viewName) {
 		object.remove("_view_"+viewName);
 	}
 	
-	public void setDatabase(Database database) {
+	void setDatabase(Database database) {
 		this.database=database;
 	}
 	
-	public JSONObject getJSONObject() {
-		if (!loaded && database!=null && getId()!=null && !getId().equals("")) {
+	/**
+	 * Loads data from the server for this document.  Actually requests a new copy of data from the 
+	 * server and uses that to populate this document.  This doesn't overwrite any unsaved data.
+	 */
+	public void refresh() {
+		if (database!=null) {
 			Document doc = database.getDocument(getId());
 			log.info("Loading: "+doc.getJSONObject());
 			load(doc.getJSONObject());
+		}
+	}
+	
+	protected void populateRevisions() {
+		if (database!=null) {
+			Document doc = database.getDocumentWithRevisions(getId());
+			log.info("Loading: "+doc.getJSONObject());
+			load(doc.getJSONObject());
+		}
+	}
+	
+	/**
+	 * Retrieves the backing JSONObject
+	 * @return
+	 */
+	public JSONObject getJSONObject() {
+		if (!loaded && database!=null && getId()!=null && !getId().equals("")) {
+			refresh();
 		}
 		return object;
 	}
@@ -138,10 +230,10 @@ public class Document {
 		return getJSONObject().accumulate(arg0, arg1);
 	}
 	public void accumulateAll(Map arg0) {
-		object.accumulateAll(arg0);
+		getJSONObject().accumulateAll(arg0);
 	}
 	public void clear() {
-		object.clear();
+		getJSONObject().clear();
 	}
 	public boolean containsKey(Object arg0) {
 		return getJSONObject().containsKey(arg0);
@@ -258,7 +350,7 @@ public class Document {
 		return getJSONObject().put(arg0, arg1);
 	}
 	public void putAll(Map arg0) {
-		object.putAll(arg0);
+		getJSONObject().putAll(arg0);
 	}
 	public Object remove(Object arg0) {
 		return getJSONObject().remove(arg0);
@@ -271,5 +363,8 @@ public class Document {
 	}
 	public Collection values() {
 		return getJSONObject().values();
+	}
+	public boolean isEmpty() {
+		return getJSONObject().isEmpty();
 	}
 }

@@ -8,8 +8,11 @@ Main task: build
 
 -->
 <project name="couchdb4j" basedir="." default="jar">
-    <property name="java.src.dir" value="src/java"/>
 	
+	<property name="version.major" value="0"/>
+	<property name="version.minor" value="1"/>
+	<property name="java.src.dir" value="src/java"/>
+		
 	<property name="lib.dir" value="lib/"/>
 	<property name="dist.dir" value="dist/"/>
 
@@ -22,7 +25,7 @@ Main task: build
 	<property name="test.report.dir" value="build/test/reports"/>
 
 	<target name="jar" depends="compile" description="Build jar file">
-		<jar destfile="${dist.dir}/${ant.project.name}.jar">
+		<jar destfile="${dist.dir}/${ant.project.name}-${version.major}.${version.minor}.jar">
 			<fileset dir="${build.classes.dir}"/>
 		</jar>
 	</target>
@@ -74,7 +77,6 @@ Main task: build
 	<!-- build paths -->
 	<path id="build.classpath">
 		<fileset dir="${lib.dir}" includes="**/*jar"/>
-		<fileset dir="${build.lib.dir}" includes="**/*jar"/>
 		<dirset dir="${build.dir}"/>
 	</path>
 	<path id="test.classpath">
@@ -89,4 +91,21 @@ Main task: build
 		<mkdir dir="${build.classes.dir}"/>
 		<mkdir dir="${dist.dir}"/>
 	</target>
+	<target name="javadoc">
+			<delete dir="javadoc"/>
+			<mkdir dir="javadoc"/>
+			<javadoc
+				destdir="javadoc"
+			    author="true"
+			    version="true"
+			    use="true"
+				classpathref="build.classpath"
+			    windowtitle="CouchDB4AJ ${version.major}.${version.minor} API">
+			
+				<packageset dir="src/java" defaultexcludes="yes">
+					<include name="**"/>
+				</packageset>
+			</javadoc>
+		</target>
+
 </project>
