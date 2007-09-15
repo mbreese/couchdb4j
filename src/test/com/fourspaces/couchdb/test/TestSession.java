@@ -16,8 +16,8 @@ public class TestSession {
 			props.load(is);
 			return new Session(props.getProperty("host"),Integer.parseInt(props.getProperty("port")));
 		} catch (IOException e) {
-			//return new Session("localhost",8888);
-			throw new RuntimeException(e);
+			return new Session("localhost",8888);
+			//throw new RuntimeException(e);
 		}		
 	}
 	@Test
