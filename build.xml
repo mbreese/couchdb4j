@@ -1,16 +1,8 @@
 <?xml version="1.0"?>
-<!--
-
-Builds the ScratchPadd application
-
-Main task: build
-
-
--->
 <project name="couchdb4j" basedir="." default="jar">
 	
 	<property name="version.major" value="0"/>
-	<property name="version.minor" value="1"/>
+	<property name="version.minor" value="1.1"/>
 	<property name="java.src.dir" value="src/java"/>
 		
 	<property name="lib.dir" value="lib/"/>
@@ -27,6 +19,7 @@ Main task: build
 	<target name="jar" depends="compile" description="Build jar file">
 		<jar destfile="${dist.dir}/${ant.project.name}-${version.major}.${version.minor}.jar">
 			<fileset dir="${build.classes.dir}"/>
+			<fileset file="LICENSE.TXT"/>
 		</jar>
 	</target>
 	<target name="compile" depends="init">
