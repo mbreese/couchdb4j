@@ -69,7 +69,8 @@ public class Database {
 		return documentCount;
 	}
 	/**
-	 * The update seq from the initial database load.  I'm not sure what this actually is...
+	 * The update seq from the initial database load.  The update sequence is the 'revision id' of an entire database. Useful for getting all documents in a database since a certain revision
+	 * @see getAllDocuments()
 	 * @return
 	 */
 	public int getUpdateSeq() {
@@ -82,6 +83,14 @@ public class Database {
 	 */
 	public ViewResults getAllDocuments() {
 		return view("_all_docs");
+	}
+	
+	/**
+	 * Runs "_all_docs_by_update_seq?startkey=revision" view on this database
+	 * @return ViewResults - the results of the view... this can be iterated over to get each document.
+	 */	
+	public ViewResults getAllDocuments(int revision) {
+		return view("_all_docs_by_update_seq?startkey=" + revision);
 	}
 
 	/**
