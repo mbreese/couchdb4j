@@ -33,6 +33,8 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -48,17 +50,59 @@ import org.apache.commons.logging.LogFactory;
  * Database db = session.getDatabase("dbname");
  * 
  * @author mbreese
- *
+ * @author brennanjubb - HTTP-Auth username/pass
  */
 public class Session {
 	Log log = LogFactory.getLog(Session.class);
 	protected final String host;
 	protected final int port;
+	protected final String user;
+	protected final String pass;
 	protected final boolean secure;
+	protected final boolean usesAuth;
 	
 	protected CouchResponse lastResponse;
 	
 	protected HttpClient httpClient = new HttpClient();
+
+	/**
+	 * Constructor for obtaining a Session with an HTTP-AUTH username/password and (optionally) a secure connection
+	 * This isn't supported by CouchDB - you need a proxy in front to use this
+	 * @param host - hostname
+	 * @param port - port to use
+	 * @param user - username
+	 * @param pass - password
+	 * @param secure  - use an SSL connection?
+	 */
+	public Session(String host, int port, String user, String pass,boolean secure) {
+		this.host = host;
+		this.port = port;
+		this.user = user;
+		this.pass = pass;
+		this.usesAuth = true;
+		this.secure = secure;
+		this.httpClient.getState().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass));
+
+	}
+
+	/**
+	 * Constructor for obtaining a Session with an HTTP-AUTH username/password
+	 * This isn't supported by CouchDB - you need a proxy in front to use this
+	 * @param host
+	 * @param port
+	 * @param user - username
+	 * @param pass - password
+	 */
+	public Session(String host, int port, String user, String pass) {
+		this.host = host;
+		this.port = port;
+		this.user = user;
+		this.pass = pass;
+		this.usesAuth = true;
+		this.secure = false;
+		this.httpClient.getState().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass));
+
+	}
 
 	/**
 	 * Main constructor for obtaining a Session.
@@ -66,22 +110,28 @@ public class Session {
 	 * @param port
 	 */
 	public Session(String host, int port) {
-		this.host=host;
-		this.port=port;
-		this.secure=false;
+		this.host = host;
+		this.port = port;
+		this.user = null;
+		this.pass = null;
+		this.usesAuth = false;
+		this.secure = false;
 	}
 	/**
 	 * Optional constructor that indicates an HTTPS connection should be used.
-	 * (I'm not even sure this is supported by CouchDB)
+	 * This isn't supported by CouchDB - you need a proxy in front to use this
 	 * 
 	 * @param host
 	 * @param port
 	 * @param secure
 	 */
 	public Session(String host, int port, boolean secure) {
-		this.host=host;
-		this.port=port;
-		this.secure=secure;
+		this.host = host;
+		this.port = port;
+		this.secure = secure;
+		this.user = null;
+		this.pass = null;
+		this.usesAuth = false;
 	}
 	
 	/**
@@ -310,6 +360,7 @@ public class Session {
 	 */
 	protected CouchResponse http(HttpMethod method) {
 		try {
+			method.setDoAuthentication(usesAuth);
 			httpClient.executeMethod(method);
 			lastResponse = new CouchResponse(method);
 		} catch (HttpException e) {
