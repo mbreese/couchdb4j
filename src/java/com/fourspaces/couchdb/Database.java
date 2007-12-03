@@ -139,7 +139,7 @@ public class Database {
 	 * @return
 	 */
 	public ViewResults adhoc(AdHocView view) {
-		CouchResponse resp = session.post(name+"/"+view.getFullName(), view.getFunction(), view.getQueryString());
+		CouchResponse resp = session.post(name+"/_temp_view", view.getFunction());
 		if (resp.isOk()) {
 			ViewResults results = new ViewResults(view,resp.getBodyAsJSON());
 			results.setDatabase(this);
@@ -174,9 +174,9 @@ public class Database {
 		if (resp.isOk()) {
 			try {
 				if (doc.getId()==null || doc.getId().equals("")) {
-					doc.setId(resp.getBodyAsJSON().getString("_id"));
+					doc.setId(resp.getBodyAsJSON().getString("id"));
 				}
-				doc.setRev(resp.getBodyAsJSON().getString("_rev"));
+				doc.setRev(resp.getBodyAsJSON().getString("rev"));
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -238,7 +238,7 @@ public class Database {
 		} else if (revision!=null && !showRevisions) {
 			resp=session.get(name+"/"+id,"rev="+revision);
 		} else if (revision==null && showRevisions) {
-			resp=session.get(name+"/"+id,"full=true");
+			resp=session.get(name+"/"+id,"revs=true");
 		} else {
 			resp=session.get(name+"/"+id);
 		}
@@ -257,6 +257,14 @@ public class Database {
 	 * @return was the delete successful?
 	 */
 	public boolean deleteDocument(Document d) {
-		return session.delete(name+"/"+d.getId()).isOk();
+		CouchResponse resp = session.delete(name+"/"+d.getId() + "?rev=" + d.getRev());
+		
+		if(resp.isOk()) {
+			return true;
+		} else {
+			log.warn("Error deleting document - "+resp.getErrorId()+" "+resp.getErrorReason());
+			return false;
+		}
+		
 	}
 }

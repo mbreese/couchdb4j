@@ -36,14 +36,14 @@ public class ViewTest {
 	@Test public void adhoc() {
 
 		int all = foo.getAllDocuments().getResults().size();
-		int adhoc = foo.adhoc("function (doc) {return doc}").getResults().size();
+		int adhoc = foo.adhoc("function (doc) {map(doc, doc)}").getResults().size();
 		assertEquals(all,adhoc);
 		
 		
 	}
 	
 	@Test public void adhoc2() {
-		int adhoc = foo.adhoc("function (doc){ if (doc.foo=='bar'){ return doc}}").getResults().size();
+		int adhoc = foo.adhoc("function (doc){ if (doc.foo=='bar'){ map(doc, doc)}}").getResults().size();
 		assertEquals(1,adhoc);
 	}
 	

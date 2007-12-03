@@ -120,10 +120,11 @@ public class Document implements Map {
 	 */
 	public String[] getRevisions() {
 		String[] revs = null;
-		if (!object.has("_revisions")) {
+		if (!object.has("_revs")) {
 			populateRevisions();
 		} 
-		JSONArray ar = object.getJSONArray("_revisions");
+		System.out.println(object);
+		JSONArray ar = object.getJSONArray("_revs");
 		if (ar!=null) {
 			revs = new String[ar.size()];
 			for (int i=0 ; i< ar.size(); i++) {
