@@ -51,7 +51,8 @@ public class CouchResponse {
 	
 	boolean ok = false;
 
-	private JSONObject error;
+	private String error_id;
+	private String error_reason;
 	
 	/**
 	 * C-tor parses the method results to build the CouchResponse object.
@@ -86,8 +87,9 @@ public class CouchResponse {
 				(methodName.equals("POST") && statusCode==404) ||
 				(methodName.equals("DELETE") && statusCode==404) 
 			){
-			
-				error = JSONObject.fromObject(body).getJSONObject("error");
+				JSONObject jbody = JSONObject.fromObject(body);
+				error_id = jbody.getString("error");
+				error_reason = jbody.getString("reason");
 		} else if (
 				(methodName.equals("PUT") && statusCode==201) ||
 				(methodName.equals("POST") && statusCode==201) ||
@@ -130,8 +132,8 @@ public class CouchResponse {
 	 * @return
 	 */
 	public String getErrorId() {
-		if (error!=null) {
-			return error.getString("id");
+		if (error_id!=null) {
+			return error_id;
 		}
 		return null;
 	}
@@ -141,8 +143,8 @@ public class CouchResponse {
 	 * @return
 	 */
 	public String getErrorReason() {
-		if (error!=null) {
-			return error.getString("reason");
+		if (error_reason!=null) {
+			return error_reason;
 		}
 		return null;
 	}
