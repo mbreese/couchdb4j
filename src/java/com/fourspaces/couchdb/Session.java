@@ -273,7 +273,11 @@ public class Session {
 		if (content!=null) {
 			RequestEntity entity;
 			try {
-				entity = new StringRequestEntity(content, "application/json","UTF-8");
+				if (url.indexOf("_temp_view") != -1) {
+					entity = new StringRequestEntity(content,"text/javascript","UTF-8");
+				} else {
+					entity = new StringRequestEntity(content,"application/json","UTF-8");
+				}
 				post.setRequestEntity(entity);
 			} catch (UnsupportedEncodingException e) {
 				log.error(e);
