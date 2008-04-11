@@ -90,7 +90,7 @@ public class Database {
 	 * @return ViewResults - the results of the view... this can be iterated over to get each document.
 	 */	
 	public ViewResults getAllDocuments(int revision) {
-		return view("_all_docs_by_update_seq?startkey=" + revision);
+		return view("_all_docs_by_seq?startkey=" + revision);
 	}
 
 	/**
