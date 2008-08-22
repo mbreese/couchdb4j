@@ -230,6 +230,12 @@ public class Session {
 	 * @return the absolute URL (hostname/port/etc)
 	 */
 	protected String buildUrl(String url) {
+		try {
+			url = java.net.URLEncoder.encode(url,"utf-8");
+		} catch (UnsupportedEncodingException e) {
+			log.warn("url encoding error: "+url);
+		}
+		
 		return (secure) ? "https://"+host+":"+port+"/"+url : "http://"+host+":"+port+"/"+url;
 	}
 	
