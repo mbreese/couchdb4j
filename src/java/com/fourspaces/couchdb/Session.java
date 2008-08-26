@@ -27,14 +27,15 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -286,8 +287,7 @@ public class Session {
 				}
 				post.setRequestEntity(entity);
 			} catch (UnsupportedEncodingException e) {
-				log.error(e);
-				e.printStackTrace();
+	      log.error(ExceptionUtils.getStackTrace(e));
 			}
 		}
 		if (queryString!=null) {
@@ -318,8 +318,7 @@ public class Session {
 				entity = new StringRequestEntity(content, "application/json","UTF-8");
 				put.setRequestEntity(entity);
 			} catch (UnsupportedEncodingException e) {
-				log.error(e);
-				e.printStackTrace();
+	      log.error(ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return http(put);
@@ -374,9 +373,9 @@ public class Session {
 			httpClient.executeMethod(method);
 			lastResponse = new CouchResponse(method);
 		} catch (HttpException e) {
-			e.printStackTrace();
+      log.error(ExceptionUtils.getStackTrace(e));
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error(ExceptionUtils.getStackTrace(e));
 		} finally {
 			  method.releaseConnection();
 		}
