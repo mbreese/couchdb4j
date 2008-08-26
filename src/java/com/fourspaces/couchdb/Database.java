@@ -39,6 +39,8 @@ public class Database {
 	
 	private Session session;
 	
+	private static final String VIEW = "_view";
+	
 	/**
 	 * C-tor only used by the Session object.  You'd never call this directly.
 	 * @param json
@@ -82,7 +84,7 @@ public class Database {
 	 * @return ViewResults - the results of the view... this can be iterated over to get each document.
 	 */
 	public ViewResults getAllDocuments() {
-		return view("_all_docs");
+		return view(new View("_all_docs"), false);
 	}
 	
 	/**
@@ -90,36 +92,55 @@ public class Database {
 	 * @return ViewResults - the results of the view... this can be iterated over to get each document.
 	 */	
 	public ViewResults getAllDocuments(int revision) {
-		return view("_all_docs_by_seq?startkey=" + revision);
+		return view(new View("_all_docs_by_seq?startkey=" + revision), false);
 	}
 
 	/**
 	 * Runs a named view on the database
 	 * This will run a view and apply any filtering that is requested (reverse, startkey, etc).
-	 * <i>Not currently working in CouchDB code</i>
 	 * 
 	 * @param view
 	 * @return
 	 */
 	public ViewResults view(View view) {
-		CouchResponse resp = session.get(name+"/"+view.getFullName(), view.getQueryString());		
-		if (resp.isOk()) {
-			ViewResults results = new ViewResults(view,resp.getBodyAsJSON());
-			results.setDatabase(this);
-			return results;
-		}
-		return null;
-	}
-	
+    return view(view, true);
+  }
+
 	/**
-	 * Runs a named view
-	 * <i>Not currently working in CouchDB code</i>
-	 * @param name - the fullname (including the document name) ex: foodoc:viewname
+	 * Runs a view, appending "_view" to the request if isPermanentView is true. 
+	 * 	 * 
+	 * @param view
+	 * @param isPermanentView
 	 * @return
 	 */
+  private ViewResults view(final View view, final boolean isPermanentView) {
+    String url = null;
+    if (isPermanentView) {
+      url = this.name + "/" + VIEW + "/" + view.getFullName();
+    } else {
+      url = this.name + "/" + view.getFullName();
+    }
+
+    CouchResponse resp = session.get(url, view.getQueryString());
+    if (resp.isOk()) {
+      ViewResults results = new ViewResults(view, resp.getBodyAsJSON());
+      results.setDatabase(this);
+      return results;
+    }
+    return null;
+
+  }
+
+  /**
+   * Runs a named view <i>Not currently working in CouchDB code</i>
+   * 
+   * @param name
+   *          - the fullname (including the document name) ex: foodoc:viewname
+   * @return
+   */
 
 	public ViewResults view(String fullname) {
-		return view(new View(fullname));
+		return view(new View(fullname), true);
 	}
 
 	/**
@@ -166,7 +187,7 @@ public class Database {
 	public void saveDocument(Document doc, String docId) {
 		CouchResponse resp;
 		if (docId==null || docId.equals("")) {
-			resp= session.post(name+"/",doc.getJSONObject().toString());
+			resp= session.post(name,doc.getJSONObject().toString());
 		} else {
 			resp= session.put(name+"/"+docId,doc.getJSONObject().toString());
 		}
