@@ -16,9 +16,7 @@
 
 package com.fourspaces.couchdb;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -64,21 +62,14 @@ public class CouchResponse {
 	 */
 	CouchResponse(HttpMethod method) throws IOException {
 		methodName=method.getName();
-		String line = "";
-		BufferedReader reader = new BufferedReader(new InputStreamReader(method.getResponseBodyAsStream()));
-		while ((line=reader.readLine())!=null) {
-			if (body==null) {
-				body = "";
-			} else {
-				body +="\n";
-			}
-			body+=line;
-		}
+    headers = method.getResponseHeaders();
+		body = method.getResponseBodyAsString();
+		
 		path = method.getPath();
 		if (method.getQueryString()!=null && !method.getQueryString().equals("")) {
 			path += "?"+method.getQueryString();
 		}
-		headers = method.getResponseHeaders();
+
 		statusCode=method.getStatusCode();
 		
 		if (
@@ -93,8 +84,8 @@ public class CouchResponse {
 		} else if (
 				(methodName.equals("PUT") && statusCode==201) ||
 				(methodName.equals("POST") && statusCode==201) ||
-				(methodName.equals("DELETE") && statusCode==202) 
-			) {
+				(methodName.equals("DELETE") && statusCode==202) ||
+		    (methodName.equals("DELETE") && statusCode==200)) {
 				ok = JSONObject.fromObject(body).getBoolean("ok");
 			
 		} else if ((method.getName().equals("GET") || method.getName().equals("POST")) && statusCode==200) {

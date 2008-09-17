@@ -16,9 +16,14 @@
 
 package com.fourspaces.couchdb;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+
+import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -86,6 +91,16 @@ public class Database {
 	public ViewResults getAllDocuments() {
 		return view(new View("_all_docs"), false);
 	}
+	
+	 /**
+   * Runs the standard "_all_docs" view on this database, with count
+   * @return ViewResults - the results of the view... this can be iterated over to get each document.
+   */
+  public ViewResults getAllDocumentsWithCount(int count) {
+    View v = new View("_all_docs");
+    v.setCount(count);
+    return view(v, false);
+  }
 	
 	/**
 	 * Runs "_all_docs_by_update_seq?startkey=revision" view on this database
@@ -160,7 +175,11 @@ public class Database {
 	 * @return
 	 */
 	public ViewResults adhoc(AdHocView view) {
-		CouchResponse resp = session.post(name+"/_temp_view", view.getFunction());
+	  
+	  JSONObject ahViewJSONObj = new JSONObject();
+	  ahViewJSONObj.accumulate("map", view.getFunction());
+	  	  
+		CouchResponse resp = session.post(name+"/_temp_view", ahViewJSONObj.toString());
 		if (resp.isOk()) {
 			ViewResults results = new ViewResults(view,resp.getBodyAsJSON());
 			results.setDatabase(this);
@@ -184,12 +203,12 @@ public class Database {
 	 * @param doc
 	 * @param docId
 	 */
-	public void saveDocument(Document doc, String docId) {
+	public void saveDocument(Document doc, String docId) throws IOException {
 		CouchResponse resp;
 		if (docId==null || docId.equals("")) {
 			resp= session.post(name,doc.getJSONObject().toString());
 		} else {
-			resp= session.put(name+"/"+docId,doc.getJSONObject().toString());
+			resp= session.put(name+"/"+ URLEncoder.encode(docId, "utf-8"),doc.getJSONObject().toString());
 		}
 		
 		if (resp.isOk()) {
@@ -211,8 +230,45 @@ public class Database {
 	 * Save a document w/o specifying an id (can be null)
 	 * @param doc
 	 */
-	public void saveDocument(Document doc) {
-		saveDocument(doc,doc.getId());
+	public void saveDocument(Document doc) throws IOException {
+		saveDocument(doc, doc.getId());
+	}
+		
+	public void bulkSaveDocuments(Document[] documents) throws IOException {
+	   CouchResponse resp = null;
+	   
+	   final JSONObject jsonObject = new JSONObject();
+	   
+	   jsonObject.accumulate("docs", documents);
+
+	   
+	   resp = session.post(name + "/_bulk_docs", jsonObject.toString());
+	  
+	   
+	   if (resp.isOk()) {
+	      // TODO set Ids and revs and name (db)
+	     final JSONObject respJsonObj = resp.getBodyAsJSON();
+	     JSONArray respJsonArray = (JSONArray) respJsonObj.get("new_revs");
+	     JSONObject respObj = null;
+	     String id = null;
+	     String rev = null;
+	     for (int i = 0; i < documents.length; i++) {
+	       respObj = respJsonArray.getJSONObject(i);
+	       id = respObj.getString("id");
+	       rev = respObj.getString("rev");
+	       if (StringUtils.isBlank(documents[i].getId())) {
+           documents[i].setId(id);
+           documents[i].setRev(rev);
+	       } else if (StringUtils.isNotBlank(documents[i].getId()) && documents[i].getId().equals(id)) {
+	         documents[i].setRev(rev);
+	       } else {
+	         log.warn("returned bulk save array in incorrect order, saved documents do not have updated rev or ids");
+	       }
+	       documents[i].setDatabase(this);
+ 	     }
+	    } else {
+	      log.warn("Error bulk saving documents - "+resp.getErrorId()+" "+resp.getErrorReason());
+	    }
 	}
 	
 	/**
@@ -220,7 +276,7 @@ public class Database {
 	 * @param id
 	 * @return
 	 */
-	public Document getDocument(String id) {
+	public Document getDocument(String id) throws IOException {
 		return getDocument(id,null,false);
 	}
 	/**
@@ -230,7 +286,7 @@ public class Database {
 	 * @param id
 	 * @return
 	 */
-	public Document getDocumentWithRevisions(String id) {
+	public Document getDocumentWithRevisions(String id) throws IOException {
 		return getDocument(id,null,true);
 	}
 
@@ -240,7 +296,7 @@ public class Database {
 	 * @param revision
 	 * @return
 	 */
-	public Document getDocument(String id, String revision) {
+	public Document getDocument(String id, String revision) throws IOException {
 		return getDocument(id,revision,false);
 	}
 	
@@ -251,17 +307,17 @@ public class Database {
 	 * @param showRevisions
 	 * @return the document
 	 */
-	public Document getDocument(String id, String revision, boolean showRevisions) {
+	public Document getDocument(String id, String revision, boolean showRevisions) throws IOException {
 		CouchResponse resp;
 		Document doc = null;
 		if (revision!=null && showRevisions) {
-			resp=session.get(name+"/"+id,"rev="+revision+"&full=true");
+			resp=session.get(name+"/"+URLEncoder.encode(id, "utf-8"),"rev="+revision+"&full=true");
 		} else if (revision!=null && !showRevisions) {
-			resp=session.get(name+"/"+id,"rev="+revision);
+			resp=session.get(name+"/"+URLEncoder.encode(id, "utf-8"),"rev="+revision);
 		} else if (revision==null && showRevisions) {
-			resp=session.get(name+"/"+id,"revs=true");
+			resp=session.get(name+"/"+URLEncoder.encode(id, "utf-8"),"revs=true");
 		} else {
-			resp=session.get(name+"/"+id);
+			resp=session.get(name+"/"+URLEncoder.encode(id, "utf-8"));
 		}
 		if (resp.isOk()) {
 			doc = new Document(resp.getBodyAsJSON());
@@ -276,9 +332,15 @@ public class Database {
 	 * Deletes a document
 	 * @param d
 	 * @return was the delete successful?
+	 * @throws IllegalArgumentException for blank document id
 	 */
-	public boolean deleteDocument(Document d) {
-		CouchResponse resp = session.delete(name+"/"+d.getId() + "?rev=" + d.getRev());
+	public boolean deleteDocument(Document d) throws IOException {
+	  
+	  if (StringUtils.isBlank(d.getId())) {
+	    throw new IllegalArgumentException("cannot delete document, doc id is empty");
+	  }
+	  
+		CouchResponse resp = session.delete(name+"/"+URLEncoder.encode(d.getId(), "utf-8").toString() + "?rev=" + d.getRev());
 		
 		if(resp.isOk()) {
 			return true;

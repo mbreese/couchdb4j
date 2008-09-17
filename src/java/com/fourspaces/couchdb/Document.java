@@ -16,6 +16,7 @@
 
 package com.fourspaces.couchdb;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -24,6 +25,7 @@ import java.util.Set;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -97,7 +99,11 @@ public class Document implements Map {
 	 * @return
 	 */
 	public String getId() {
-		return object.optString("_id");
+	  if (StringUtils.isNotBlank(object.optString("_id"))) {
+	    return object.optString("_id");
+	  } else {	
+	    return object.optString("id");
+	  }
 	}
 	public void setId(String id)  {
 		object.put("_id",id);
@@ -107,7 +113,11 @@ public class Document implements Map {
 	 * @return
 	 */
 	public String getRev()  {
-		return object.optString("_rev");
+    if (StringUtils.isNotBlank(object.optString("_rev"))) {
+      return object.optString("_rev");
+    } else {
+      return object.optString("rev");
+    }
 	}
 	public void setRev(String rev)  {
 		object.put("_rev", rev);
@@ -118,7 +128,7 @@ public class Document implements Map {
 	 * populated with a "full=true" query, then the database will be requeried
 	 * @return
 	 */
-	public String[] getRevisions() {
+	public String[] getRevisions() throws IOException {
 		String[] revs = null;
 		if (!object.has("_revs")) {
 			populateRevisions();
@@ -141,7 +151,7 @@ public class Document implements Map {
 	 */
 	public View getView(String name) {
 		View view = null;
-		if (object.has("_view_"+name)) {
+		if (object.has("_design/"+name)) {
 			view = new View(this,name);
 		}
 		return view;
@@ -153,13 +163,19 @@ public class Document implements Map {
 	 * <p>
 	 * This isn't persisted until the document is saved.
 	 * 
+	 * @param design document name
 	 * @param viewName
 	 * @param function
 	 * @return
 	 */
-	public View addView(String viewName, String function) {
-		View view = new View(this,viewName, "\""+function+"\"");
-		object.put("_view_"+viewName, "\""+function+"\"");
+	public View addView(String designDoc, String viewName, String function) {
+		View view = new View(this, viewName, function);
+		JSONObject o = new JSONObject();
+		JSONObject views = new JSONObject();
+		views.put(viewName, function);
+		o.put("views", views);
+		
+		object.put("_design/"+ designDoc, o);
 		return view;
 	}
 	
@@ -170,7 +186,7 @@ public class Document implements Map {
 	 * @param viewName
 	 */
 	public void deleteView(String viewName) {
-		object.remove("_view_"+viewName);
+		object.remove("_design/"+viewName);
 	}
 	
 	void setDatabase(Database database) {
@@ -181,7 +197,7 @@ public class Document implements Map {
 	 * Loads data from the server for this document.  Actually requests a new copy of data from the 
 	 * server and uses that to populate this document.  This doesn't overwrite any unsaved data.
 	 */
-	public void refresh() {
+	public void refresh() throws IOException {
 		if (database!=null) {
 			Document doc = database.getDocument(getId());
 			log.info("Loading: "+doc.getJSONObject());
@@ -189,7 +205,7 @@ public class Document implements Map {
 		}
 	}
 	
-	protected void populateRevisions() {
+	protected void populateRevisions() throws IOException {
 		if (database!=null) {
 			Document doc = database.getDocumentWithRevisions(getId());
 			log.info("Loading: "+doc.getJSONObject());
@@ -203,7 +219,11 @@ public class Document implements Map {
 	 */
 	public JSONObject getJSONObject() {
 		if (!loaded && database!=null && getId()!=null && !getId().equals("")) {
-			refresh();
+			try {
+        refresh();
+      } catch (IOException e) {
+        throw new RuntimeException("error in refreshing Document", e);
+      }
 		}
 		return object;
 	}

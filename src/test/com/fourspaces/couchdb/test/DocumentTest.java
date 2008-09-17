@@ -10,6 +10,8 @@ import java.util.Date;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,12 +20,15 @@ import com.fourspaces.couchdb.Database;
 import com.fourspaces.couchdb.Document;
 import com.fourspaces.couchdb.Session;
 import com.fourspaces.couchdb.View;
+import com.fourspaces.couchdb.ViewResults;
 
 public class DocumentTest {
+  Log log = LogFactory.getLog(getClass());
+  
 	Session sess = TestSession.getTestSession();
 	Database foo;
 	
-	@Before public void createTestDB() {
+	@Before public void createTestDB() throws Exception {
 		foo=sess.createDatabase("foo");
 		foo.saveDocument(new Document(),"foo");
 		foo.saveDocument(new Document());
@@ -35,7 +40,7 @@ public class DocumentTest {
 	
 	
 	@Test
-	public void update() {
+	public void update() throws Exception {
 		JSONObject obj = new JSONObject();
 		obj.put("foo","bar");
 		obj.accumulate("array", "ar1");
@@ -63,7 +68,7 @@ public class DocumentTest {
 		
 	}
 	
-	@Test public void get() {		
+	@Test public void get() throws Exception {	
 		JSONObject obj = new JSONObject();
 		obj.put("foo","bar");
 		obj.accumulate("array", "ar1");
@@ -86,9 +91,9 @@ public class DocumentTest {
 
 	@Test
 	public void list1() {
-		View one = new View("_all_docs");
-		one.setCount(1);
-		assertEquals(foo.view(one).getResults().size(),1 );
+	  
+	  ViewResults vr = foo.getAllDocumentsWithCount(1);
+		assertEquals(vr.getResults().size(),1 );
 	}
 
 	
@@ -96,5 +101,29 @@ public class DocumentTest {
 	public void deleteAll() {
 		sess.deleteDatabase("foo");
 	}
+	
+	@Test public void bulkSave() throws Exception {
+	  
+	  Document[] docs = new Document[3];
+	  docs[0] = new Document();
+	  docs[1] = new Document();
+	  docs[2] = new Document();
+    
+	  docs[0].accumulate("foo", "bar1" + System.currentTimeMillis());
+	  docs[1].accumulate("foo", "bar2" + System.currentTimeMillis());
+	  docs[2].accumulate("foo", "bar3" + System.currentTimeMillis());
+	  
+ 	  foo.bulkSaveDocuments(docs);
+ 	  
+ 	  for (Document d : docs) {
+ 	    boolean deleted = foo.deleteDocument(d);
+      assertEquals(deleted, true);
+ 	  }
+ 	  
+ 	 
+	  
+	  
+	}
+	  
 
 }

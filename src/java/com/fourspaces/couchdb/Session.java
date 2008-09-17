@@ -231,12 +231,6 @@ public class Session {
 	 * @return the absolute URL (hostname/port/etc)
 	 */
 	protected String buildUrl(String url) {
-		try {
-			url = java.net.URLEncoder.encode(url,"utf-8");
-		} catch (UnsupportedEncodingException e) {
-			log.warn("url encoding error: "+url);
-		}
-		
 		return (secure) ? "https://"+host+":"+port+"/"+url : "http://"+host+":"+port+"/"+url;
 	}
 	
@@ -280,11 +274,7 @@ public class Session {
 		if (content!=null) {
 			RequestEntity entity;
 			try {
-				if (url.indexOf("_temp_view") != -1) {
-					entity = new StringRequestEntity(content,"text/javascript","UTF-8");
-				} else {
-					entity = new StringRequestEntity(content,"application/json","UTF-8");
-				}
+			  entity = new StringRequestEntity(content,"application/json","UTF-8");
 				post.setRequestEntity(entity);
 			} catch (UnsupportedEncodingException e) {
 	      log.error(ExceptionUtils.getStackTrace(e));
@@ -390,4 +380,9 @@ public class Session {
 	public CouchResponse getLastResponse() {
 		return lastResponse;
 	}
+	
+	public void setHttpTimeout(int ms) {
+	  this.httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(ms);
+	}
+	
 }

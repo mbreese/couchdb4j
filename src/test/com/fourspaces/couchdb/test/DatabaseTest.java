@@ -47,4 +47,6 @@ public class DatabaseTest {
 		assertEquals(sess.getDatabaseNames().size(),old+1);
 		sess.deleteDatabase("foo2");
 	}
+	
+
 }
