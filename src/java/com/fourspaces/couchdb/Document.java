@@ -56,6 +56,7 @@ import org.apache.commons.logging.LogFactory;
  * @author mbreese
  *
  */
+@SuppressWarnings("unchecked")
 public class Document implements Map {
 	Log log = LogFactory.getLog(Document.class);
 	protected Database database=null;
