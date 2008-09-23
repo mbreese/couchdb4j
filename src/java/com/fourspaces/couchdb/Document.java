@@ -125,7 +125,7 @@ public class Document implements Map {
 	
 	/**
 	 * A list of the revision numbers that this document has.  If this hasn't been 
-	 * populated with a "full=true" query, then the database will be requeried
+	 * populated with a "full=true" query, then the database will be re-queried
 	 * @return
 	 */
 	public String[] getRevisions() throws IOException {
@@ -133,7 +133,7 @@ public class Document implements Map {
 		if (!object.has("_revs")) {
 			populateRevisions();
 		} 
-		System.out.println(object);
+		//System.out.println(object);
 		JSONArray ar = object.getJSONArray("_revs");
 		if (ar!=null) {
 			revs = new String[ar.size()];
