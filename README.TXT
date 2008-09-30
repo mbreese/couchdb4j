@@ -62,11 +62,11 @@ Database db = s.getDatabase("foodb");
 
 Document doc = db.getDocument("documentid1234");
 doc.put("foo","bar");
-db.save(doc);
+db.saveDocument(doc);
 
 Document newdoc = new Document();
-doc.put("foo","baz");
-db.save(doc); // auto-generated id given by the database
+newdoc.put("foo","baz");
+db.saveDocument(newdoc); // auto-generated id given by the database
 
 // Running a view
 
