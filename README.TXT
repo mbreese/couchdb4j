@@ -57,7 +57,7 @@ over simplification, but you get the idea.
 
 Example
 -------
-Session s = new Session("localhost",8888);
+Session s = new Session("localhost",5984);
 Database db = s.getDatabase("foodb");
 
 Document doc = db.getDocument("documentid1234");
