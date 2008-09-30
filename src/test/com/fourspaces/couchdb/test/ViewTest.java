@@ -72,11 +72,8 @@ public class ViewTest {
 		Document d2_2 = foo.getDocument(d2.getId());
 		log.debug("Saved d2_2 - "+d2_2.toString());
 		
-		/*
-		 * Doesn't work - CouchDB doens't support named views yet.
-		 */
-		assertNotNull(d2_2.getView("viewfoobar/testview"));
-		assertEquals(2,foo.view(d2.getView("viewfoobar/testview")).getResults().size());
+		assertNotNull(d2_2.getView("testview"));
+		assertEquals(2,foo.view(d2.getView("testview")).getResults().size());
 		
 		foo.deleteDocument(d);
 		foo.deleteDocument(d2);

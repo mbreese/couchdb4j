@@ -109,6 +109,20 @@ public class Document implements Map {
 	public void setId(String id)  {
 		object.put("_id",id);
 	}
+
+	/**
+	 * This strips _design from the document id
+	 */
+	public String getViewDocumentId() {
+		String id = getId();
+		int pos = id.lastIndexOf("/");
+		if (pos == -1) {
+			return id;
+		} else {
+			return id.substring(pos+1);
+		}
+	}
+
 	/**
 	 * This document's Revision (if saved)
 	 * @return
@@ -151,12 +165,14 @@ public class Document implements Map {
 	 * @return
 	 */
 	public View getView(String name) {
-		View view = null;
-		if (object.has("_design/"+name)) {
-			view = new View(this,name);
+		if (object.has("views")) {
+			JSONObject views = object.getJSONObject("views");
+			if (views.has(name)) {
+				return new View(this,name);
+			}
 		}
-		return view;
-	}
+		return null;
+    }
 	
 	/**
 	 * Add a view to this document.  If a view function already exists with the given viewName
@@ -170,14 +186,20 @@ public class Document implements Map {
 	 * @return
 	 */
 	public View addView(String designDoc, String viewName, String function) {
-		View view = new View(this, viewName, function);
-		JSONObject o = new JSONObject();
-		JSONObject views = new JSONObject();
-		views.put(viewName, function);
-		o.put("views", views);
-		
-		object.put("_design/"+ designDoc, o);
-		return view;
+		object.put("_id", "_design/"+ designDoc); //Not sure if _id or id should be used
+		object.put("language", "javascript"); //FIXME specify language
+        
+		JSONObject funcs = new JSONObject();
+		funcs.put("map", function);
+
+
+		JSONObject viewMap = new JSONObject();
+		viewMap.put(viewName, funcs);
+
+		object.put("views", viewMap);
+
+		return new View(this, viewName, function);
+
 	}
 	
 	/**

@@ -170,7 +170,7 @@ public class View {
 	 * @return
 	 */
 	public String getFullName() {
-		return (document==null) ? name: document.getId()+":"+name;
+		return (document==null) ? name: document.getViewDocumentId()+"/"+name;
 	}
 
 	/**
