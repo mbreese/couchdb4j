@@ -38,7 +38,7 @@
 		<mkdir dir="${test.report.dir}"/>
 		<mkdir dir="${test.report.dir}/html"/>
 
-		<javac srcdir="${test.src.dir}" destdir="${test.build.dir}">
+		<javac srcdir="${test.src.dir}" destdir="${test.build.dir}" debug="on">
 		      <classpath refid="test.classpath"/>
 		</javac>
 
