@@ -84,7 +84,7 @@ for (Document d: result.getResults()) {
 
 // Ad-Hoc view
 
-ViewResult resultAdHoc = db.adhoc("function (doc) { if (doc.foo=='bar') { return doc; }}");
+ViewResult resultAdHoc = db.adhoc("function (doc) { if (doc.foo=='bar') { emit(null, doc); }}");
 
 Requirements
 ------------

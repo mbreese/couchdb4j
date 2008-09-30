@@ -65,7 +65,7 @@ public class ViewTest {
 		Document d2 = new Document();
 		//d2.put("foo","baz");
 	//	d2.addView("all_documents", "function (doc){ return doc; }");
-		d2.addView("viewfoobar", "testview", "function (doc){ if (doc.foo=='bar'){ return doc; }}");
+		d2.addView("viewfoobar", "testview", "function (doc){ if (doc.foo=='bar'){ emit(null, doc); }}");
 		log.debug("Saving d2 - "+d2.getId()+" - "+d2.toString());
 		foo.saveDocument(d2);
 		log.debug("Saved d2  - "+d2.getId()+" - "+d2.toString());
