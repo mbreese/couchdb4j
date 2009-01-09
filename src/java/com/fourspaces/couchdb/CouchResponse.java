@@ -21,10 +21,17 @@ import java.io.IOException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.util.EntityUtils;
 
 /**
  * The CouchResponse parses the HTTP response returned by the CouchDB server.
@@ -60,35 +67,41 @@ public class CouchResponse {
 	 * @param method
 	 * @throws IOException
 	 */
-	CouchResponse(HttpMethod method) throws IOException {
-		methodName=method.getName();
-    headers = method.getResponseHeaders();
-		body = method.getResponseBodyAsString();
+	CouchResponse(HttpRequestBase req, HttpResponse response) throws IOException {
+		headers = response.getAllHeaders();
 		
-		path = method.getPath();
-		if (method.getQueryString()!=null && !method.getQueryString().equals("")) {
-			path += "?"+method.getQueryString();
-		}
+		HttpEntity entity = response.getEntity();
+		body = EntityUtils.toString(entity);
+		
+		path = req.getURI().getPath();
 
-		statusCode=method.getStatusCode();
+		statusCode = response.getStatusLine().getStatusCode();
+		
+		boolean isGet = (req instanceof HttpGet);
+		
+		boolean isPut = (req instanceof HttpPut);
+		
+		boolean isPost = (req instanceof HttpPost);
+		
+		boolean isDelete = (req instanceof HttpDelete);
 		
 		if (
-				(methodName.equals("GET") && statusCode==404) || 
-				(methodName.equals("PUT") && statusCode==409) ||
-				(methodName.equals("POST") && statusCode==404) ||
-				(methodName.equals("DELETE") && statusCode==404) 
-			){
+				(isGet && statusCode==404) || 
+				(isPut && statusCode==409) ||
+				(isPost && statusCode==404) ||
+				(isDelete && statusCode==404) 
+			) {
 				JSONObject jbody = JSONObject.fromObject(body);
 				error_id = jbody.getString("error");
 				error_reason = jbody.getString("reason");
 		} else if (
-				(methodName.equals("PUT") && statusCode==201) ||
-				(methodName.equals("POST") && statusCode==201) ||
-				(methodName.equals("DELETE") && statusCode==202) ||
-		    (methodName.equals("DELETE") && statusCode==200)) {
+				(isPut && statusCode==201) ||
+				(isPost && statusCode==201) ||
+				(isDelete && statusCode==202) ||
+		    (isDelete && statusCode==200)) {
 				ok = JSONObject.fromObject(body).getBoolean("ok");
 			
-		} else if ((method.getName().equals("GET") || method.getName().equals("POST")) && statusCode==200) {
+		} else if ( (req instanceof HttpGet) || ( (req instanceof HttpPost) && statusCode==200 ) ) {
 			ok=true;
 		}
 		log.debug(toString());

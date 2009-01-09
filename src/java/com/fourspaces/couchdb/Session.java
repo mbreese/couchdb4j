@@ -18,32 +18,38 @@ package com.fourspaces.couchdb;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.json.JSONArray;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.DeleteMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.params.AllClientPNames;
+import org.apache.http.client.params.ClientPNames;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
 
 /**
  * The Session is the main connection to the CouchDB instance.  However, you'll only use the Session
  * to obtain a reference to a CouchDB Database.  All of the main work happens at the Database level.
  * <p>
- * It uses the Apache-Commons HttpClient library for all communication with the server.  This is
+ * It uses the Apache's  HttpClient library for all communication with the server.  This is
  * a little more robust than the standard URLConnection.
  * <p>
  * Ex usage: <br>
@@ -54,7 +60,11 @@ import org.apache.commons.logging.LogFactory;
  * @author brennanjubb - HTTP-Auth username/pass
  */
 public class Session {
-	Log log = LogFactory.getLog(Session.class);
+	private static final String DEFAULT_CHARSET = HTTP.UTF_8;
+
+	private static final String MIME_TYPE_JSON = "application/json";
+	
+	protected Log log = LogFactory.getLog(Session.class);
 	protected final String host;
 	protected final int port;
 	protected final String user;
@@ -64,7 +74,7 @@ public class Session {
 	
 	protected CouchResponse lastResponse;
 	
-	protected HttpClient httpClient = new HttpClient();
+	protected HttpClient httpClient;
 
 	/**
 	 * Constructor for obtaining a Session with an HTTP-AUTH username/password and (optionally) a secure connection
@@ -75,15 +85,23 @@ public class Session {
 	 * @param pass - password
 	 * @param secure  - use an SSL connection?
 	 */
-	public Session(String host, int port, String user, String pass,boolean secure) {
+	public Session(String host, int port, String user, String pass, boolean usesAuth, boolean secure) {
 		this.host = host;
 		this.port = port;
 		this.user = user;
 		this.pass = pass;
-		this.usesAuth = true;
+		this.usesAuth = usesAuth;
 		this.secure = secure;
-		this.httpClient.getState().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass));
+		
+		DefaultHttpClient defaultClient = new DefaultHttpClient();
+		defaultClient.getCredentialsProvider().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass) );
+		
+		this.httpClient = defaultClient;
 
+		setUserAgent("couchdb4j");
+		setSocketTimeout( (30 * 1000) );
+		setConnectionTimeout( (15 * 1000) );
+		
 	}
 
 	/**
@@ -95,14 +113,7 @@ public class Session {
 	 * @param pass - password
 	 */
 	public Session(String host, int port, String user, String pass) {
-		this.host = host;
-		this.port = port;
-		this.user = user;
-		this.pass = pass;
-		this.usesAuth = true;
-		this.secure = false;
-		this.httpClient.getState().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass));
-
+		this(host, port, user, pass, false, false);
 	}
 
 	/**
@@ -111,12 +122,7 @@ public class Session {
 	 * @param port
 	 */
 	public Session(String host, int port) {
-		this.host = host;
-		this.port = port;
-		this.user = null;
-		this.pass = null;
-		this.usesAuth = false;
-		this.secure = false;
+		this(host, port, null, null, false, false);
 	}
 	/**
 	 * Optional constructor that indicates an HTTPS connection should be used.
@@ -127,12 +133,7 @@ public class Session {
 	 * @param secure
 	 */
 	public Session(String host, int port, boolean secure) {
-		this.host = host;
-		this.port = port;
-		this.secure = secure;
-		this.user = null;
-		this.pass = null;
-		this.usesAuth = false;
+		this(host, port, null, null, false, secure);
 	}
 	
 	/**
@@ -231,7 +232,26 @@ public class Session {
 	 * @return the absolute URL (hostname/port/etc)
 	 */
 	protected String buildUrl(String url) {
-		return (secure) ? "https://"+host+":"+port+"/"+url : "http://"+host+":"+port+"/"+url;
+		return ( (secure) ? "https" : "http") + "://"+host+":"+port+"/" + url;
+	}
+	
+	protected String buildUrl(String url, String queryString) {
+		return url + "?" + queryString;
+	}
+	
+	protected String buildUrl(String url, NameValuePair[] params) {
+		
+		url = ( (secure) ? "https" : "http") + "://"+host+":"+port+"/" + url;
+		
+		if (params.length > 0) {
+			url += "?";
+		}
+		for (NameValuePair param : params) {
+			url += param.getName() + "=" + param.getValue(); 
+		}
+		
+		return url;
+			
 	}
 	
 	/**
@@ -240,7 +260,7 @@ public class Session {
 	 * @return
 	 */
 	CouchResponse delete(String url) {
-		DeleteMethod del = new DeleteMethod(buildUrl(url));
+		HttpDelete del = new HttpDelete(buildUrl(url));
 		return http(del);
 	}
 
@@ -270,19 +290,19 @@ public class Session {
 	 * @return
 	 */
 	CouchResponse post(String url, String content, String queryString) {
-		PostMethod post = new PostMethod(buildUrl(url));
+		HttpPost post = new HttpPost(buildUrl(url, queryString));
 		if (content!=null) {
-			RequestEntity entity;
+			HttpEntity entity;
 			try {
-			  entity = new StringRequestEntity(content,"application/json","UTF-8");
-				post.setRequestEntity(entity);
+			    entity = new StringEntity(content, DEFAULT_CHARSET);
+				post.setEntity(entity);
+				post.setHeader(new BasicHeader("Content-Type", MIME_TYPE_JSON));
 			} catch (UnsupportedEncodingException e) {
-	      log.error(ExceptionUtils.getStackTrace(e));
+				log.error(ExceptionUtils.getStackTrace(e));
 			}
 		}
-		if (queryString!=null) {
-			post.setQueryString(queryString);
-		}
+		
+		
 		return http(post);
 	}
 	
@@ -301,14 +321,15 @@ public class Session {
 	 * @return
 	 */
 	CouchResponse put(String url, String content) {
-		PutMethod put = new PutMethod(buildUrl(url));
+		HttpPut put = new HttpPut(buildUrl(url));
 		if (content!=null) {
-			RequestEntity entity;
+			HttpEntity entity;
 			try {
-				entity = new StringRequestEntity(content, "application/json","UTF-8");
-				put.setRequestEntity(entity);
+				entity = new StringEntity(content, DEFAULT_CHARSET);
+				put.setEntity(entity);
+				put.setHeader(new BasicHeader("Content-Type", MIME_TYPE_JSON));
 			} catch (UnsupportedEncodingException e) {
-	      log.error(ExceptionUtils.getStackTrace(e));
+				log.error(ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return http(put);
@@ -320,7 +341,7 @@ public class Session {
 	 * @return
 	 */
 	CouchResponse get(String url) {
-		GetMethod get = new GetMethod(buildUrl(url));
+		HttpGet get = new HttpGet(buildUrl(url));
 		return http(get);
 	}
 	/**
@@ -330,8 +351,7 @@ public class Session {
 	 * @return
 	 */
 	CouchResponse get(String url, NameValuePair[] queryParams) {
-		GetMethod get = new GetMethod(buildUrl(url));
-		get.setQueryString(queryParams);
+		HttpGet get = new HttpGet(buildUrl(url, queryParams));
 		return http(get);
 	}
 	
@@ -342,8 +362,7 @@ public class Session {
 	 * @return
 	 */
 	CouchResponse get(String url, String queryString) {
-		GetMethod get = new GetMethod(buildUrl(url));
-		get.setQueryString(queryString);
+		HttpGet get = new HttpGet(buildUrl(url, queryString));
 		return http(get);
 	}
 	
@@ -357,17 +376,26 @@ public class Session {
 	 * @param method
 	 * @return the CouchResponse (status / error / json document)
 	 */
-	protected CouchResponse http(HttpMethod method) {
+	protected CouchResponse http(HttpRequestBase req) {
+		
+		HttpResponse httpResponse = null;
+		HttpEntity entity = null;
+		
 		try {
-			method.setDoAuthentication(usesAuth);
-			httpClient.executeMethod(method);
-			lastResponse = new CouchResponse(method);
-		} catch (HttpException e) {
-      log.error(ExceptionUtils.getStackTrace(e));
+			req.getParams().setBooleanParameter(ClientPNames.HANDLE_AUTHENTICATION, true);
+			httpResponse = httpClient.execute(req);
+			entity = httpResponse.getEntity();
+			lastResponse = new CouchResponse(req, httpResponse);
 		} catch (IOException e) {
 			log.error(ExceptionUtils.getStackTrace(e));
 		} finally {
-			  method.releaseConnection();
+			  if (entity != null) {
+				try {
+					entity.consumeContent();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			  }
 		}
 		return lastResponse;	
 	}
@@ -381,8 +409,29 @@ public class Session {
 		return lastResponse;
 	}
 	
-	public void setHttpTimeout(int ms) {
-	  this.httpClient.getHttpConnectionManager().getParams().setConnectionTimeout(ms);
+	public void setUserAgent(String ua)
+	{
+		this.httpClient.getParams().setParameter(AllClientPNames.USER_AGENT, ua);
 	}
 	
+	public void setConnectionTimeout(int milliseconds)
+	{
+		httpClient.getParams().setIntParameter(AllClientPNames.CONNECTION_TIMEOUT, milliseconds);
+	}
+	
+	public void setSocketTimeout(int milliseconds)
+	{
+		httpClient.getParams().setIntParameter(AllClientPNames.SO_TIMEOUT, milliseconds);
+	}
+
+	protected String encodeParameter(String paramValue) {
+		try
+		{
+			return URLEncoder.encode(paramValue, DEFAULT_CHARSET);
+		} 
+		catch (UnsupportedEncodingException e)
+		{
+			throw new RuntimeException(e);
+		}	
+	}
 }

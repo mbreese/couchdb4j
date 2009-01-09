@@ -2,7 +2,7 @@
 <project name="couchdb4j" basedir="." default="jar">
 	
 	<property name="version.major" value="0"/>
-	<property name="version.minor" value="2.0-SVN"/>
+	<property name="version.minor" value="3.0-SVN"/>
 	<property name="java.src.dir" value="src/java"/>
 		
 	<property name="lib.dir" value="lib/"/>
