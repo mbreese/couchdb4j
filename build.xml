@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<project name="couchdb4j" basedir="." default="jar">
+	
+	<property name="version.major" value="0"/>
+	<property name="version.minor" value="3.0-SVN"/>
+	<property name="java.src.dir" value="src/java"/>
+		
+	<property name="lib.dir" value="lib/"/>
+	<property name="dist.dir" value="dist/"/>
+
+	<property name="build.dir" value="build"/>
+	<property name="build.classes.dir" value="build/classes"/>
+
+	<property name="test.src.dir" value="src/test"/>
+	<property name="test.lib.dir" value="lib/test"/>
+	<property name="test.build.dir" value="build/test"/>
+	<property name="test.report.dir" value="build/test/reports"/>
+
+	<target name="jar" depends="compile" description="Build jar file">
+		<jar destfile="${dist.dir}/${ant.project.name}-${version.major}.${version.minor}.jar">
+			<fileset dir="${build.classes.dir}"/>
+			<fileset file="LICENSE.TXT"/>
+		</jar>
+	</target>
+	<target name="compile" depends="init">
+		<javac srcdir="${java.src.dir}"
+         destdir="${build.classes.dir}"
+         classpathref="build.classpath"
+         debug="on"
+		target="1.5"
+		/>
+	</target>
+
+	<!-- Run unit tests -->
+	<target name="test" depends="compile" description="Run all unit tests">
+		<property name="testing" value=""/>
+		<mkdir dir="${test.build.dir}"/>
+		<mkdir dir="${test.report.dir}"/>
+		<mkdir dir="${test.report.dir}/html"/>
+
+		<javac srcdir="${test.src.dir}" destdir="${test.build.dir}" debug="on">
+		      <classpath refid="test.classpath"/>
+		</javac>
+
+		<junit printsummary="yes" haltonfailure="no" fork="yes">
+			<classpath refid="test.classpath" />
+			<formatter type="xml"/>
+			<batchtest todir="${test.report.dir}">
+				<fileset dir="${test.src.dir}"
+					excludes="**/Base*"
+				/>
+			</batchtest>
+		</junit>
+		<junitreport todir="${test.report.dir}">
+		  <fileset dir="${test.report.dir}">
+		    <include name="TEST-*.xml"/>
+		  </fileset>
+		  <report format="frames" todir="${test.report.dir}/html"/>
+		</junitreport>
+	</target>
+	
+	<!-- Cleanup the build paths...
+		Remove all old compiled classes and auto-generated files
+	-->
+	<target name="clean" description="Clean the build directory for a fresh start">
+		<delete dir="build"/>
+		<antcall target="init"/>
+	</target>
+	
+	<!-- build paths -->
+	<path id="build.classpath">
+		<fileset dir="${lib.dir}" includes="**/*jar"/>
+		<dirset dir="${build.dir}"/>
+	</path>
+	<path id="test.classpath">
+		<fileset dir="${lib.dir}" includes="**/*jar"/>
+		<fileset dir="${test.lib.dir}" includes="**/*jar"/>
+		<dirset dir="${build.dir}"/>
+		<dirset dir="${test.build.dir}"/>
+		<dirset dir="${test.src.dir}"/>
+	</path>
+	<!-- Making directories required for building... -->
+	<target name="init">
+		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${build.classes.dir}"/>
+		<mkdir dir="${dist.dir}"/>
+	</target>
+	<target name="javadoc">
+			<delete dir="javadoc"/>
+			<mkdir dir="javadoc"/>
+			<javadoc
+				destdir="javadoc"
+			    author="true"
+			    version="true"
+			    use="true"
+				classpathref="build.classpath"
+			    windowtitle="CouchDB4AJ ${version.major}.${version.minor} API">
+			
+				<packageset dir="src/java" defaultexcludes="yes">
+					<include name="**"/>
+				</packageset>
+			</javadoc>
+		</target>
+
+</project>

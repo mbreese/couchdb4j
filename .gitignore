@@ -1,0 +1,7 @@
+.classpath
+.project
+.svn
+build/
+dist/
+test.log
+
