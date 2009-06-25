@@ -94,7 +94,9 @@ public class Session {
 		this.secure = secure;
 		
 		DefaultHttpClient defaultClient = new DefaultHttpClient();
-		defaultClient.getCredentialsProvider().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass) );
+		if (user != null) {
+			defaultClient.getCredentialsProvider().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass) );
+		}
 		
 		this.httpClient = defaultClient;
 
@@ -236,7 +238,7 @@ public class Session {
 	}
 	
 	protected String buildUrl(String url, String queryString) {
-		return url + "?" + queryString;
+		return (queryString != null) ? buildUrl(url) + "?" + queryString : buildUrl(url);
 	}
 	
 	protected String buildUrl(String url, NameValuePair[] params) {
@@ -382,7 +384,9 @@ public class Session {
 		HttpEntity entity = null;
 		
 		try {
-			req.getParams().setBooleanParameter(ClientPNames.HANDLE_AUTHENTICATION, true);
+			if (usesAuth) {
+				req.getParams().setBooleanParameter(ClientPNames.HANDLE_AUTHENTICATION, true);
+			}
 			httpResponse = httpClient.execute(req);
 			entity = httpResponse.getEntity();
 			lastResponse = new CouchResponse(req, httpResponse);

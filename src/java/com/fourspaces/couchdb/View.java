@@ -30,10 +30,11 @@ package com.fourspaces.couchdb;
 public class View {
 	protected String startKey;
 	protected String endKey;
-	protected Integer count;
+	protected Integer limit;
 	protected Boolean update;
 	protected Boolean reverse;
 	protected String skip;
+        protected Boolean group;
 	
 	protected String name;
 	protected Document document;
@@ -64,7 +65,7 @@ public class View {
 	 * This <i>does not actually add it to the document</i>.  That is handled by
 	 * Document.addView()
 	 * <p>
-	 * This contructor should only be called by Document.addView();
+	 * This constructor should only be called by Document.addView();
 	 * 
 	 * @param doc
 	 * @param name
@@ -96,9 +97,9 @@ public class View {
 			if (!queryString.equals("")) { queryString+="&"; }
 			queryString+="skip="+skip;
 		}
-		if (count!=null) {
+		if (limit!=null) {
 			if (!queryString.equals("")) { queryString+="&"; }
-			queryString+="count="+count;
+			queryString+="limit="+limit;
 		}
 		if (update!=null && update.booleanValue()) {
 			if (!queryString.equals("")) { queryString+="&"; }
@@ -106,18 +107,34 @@ public class View {
 		}
 		if (reverse!=null && reverse.booleanValue()) {
 			if (!queryString.equals("")) { queryString+="&"; }
-			queryString+="reverse=true";
+		 			queryString+="descending=true";
 		}
+        if (group!=null && group.booleanValue()) {
+        	if (!queryString.equals("")) { queryString+="&"; }
+        		queryString+="group=true";		
+        }
 		return queryString.equals("") ? null : queryString;
+		                 
 	}
 	
 	/**
 	 * The number of entries to return
 	 * @param count
+         * @deprecated CouchDB 0.9 uses limit instead
 	 */
 	public void setCount(Integer count) {
-		this.count = count;
+		//this.count = count;
+		setLimit(count);
 	}
+
+        public void setLimit(Integer limit) {
+          this.limit = limit;
+        }
+
+        public void setGroup(Boolean group) {
+          this.group = group;
+        }
+  
 	/**
 	 * Stop listing at this key
 	 * @param endKey
@@ -128,10 +145,15 @@ public class View {
 	/**
 	 * Reverse the listing
 	 * @param reverse
+     * @deprecated CouchDB 0.9 uses "descending" instead
 	 */
 	public void setReverse(Boolean reverse) {
 		this.reverse = reverse;
 	}
+
+    public void setDescending(Boolean descending) {
+        this.reverse = descending;
+    }
 	/**
 	 * Skip listing these keys (not sure if this works, or the format)
 	 * @param skip

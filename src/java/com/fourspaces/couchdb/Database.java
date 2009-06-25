@@ -44,7 +44,9 @@ public class Database {
 	
 	private Session session;
 	
-	private static final String VIEW = "_view";
+	private static final String VIEW = "/_view/";
+        private static final String DESIGN = "_design/";
+  
 	
 	/**
 	 * C-tor only used by the Session object.  You'd never call this directly.
@@ -118,8 +120,8 @@ public class Database {
 	 * @return
 	 */
 	public ViewResults view(View view) {
-    return view(view, true);
-  }
+          return view(view, true);
+        }
 
 	/**
 	 * Runs a view, appending "_view" to the request if isPermanentView is true. 
@@ -131,7 +133,8 @@ public class Database {
   private ViewResults view(final View view, final boolean isPermanentView) {
     String url = null;
     if (isPermanentView) {
-      url = this.name + "/" + VIEW + "/" + view.getFullName();
+      String[] elements = view.getFullName().split("/");
+      url = this.name + "/" + ((elements.length < 2) ? elements[0] : DESIGN + elements[0] + VIEW + elements[1]);
     } else {
       url = this.name + "/" + view.getFullName();
     }
