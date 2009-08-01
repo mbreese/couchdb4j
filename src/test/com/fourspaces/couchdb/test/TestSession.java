@@ -15,7 +15,7 @@ public class TestSession {
 			InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("couchdb-test.properties");
 			props.load(is);
 			return new Session(props.getProperty("host"),Integer.parseInt(props.getProperty("port")));
-		} catch (IOException e) {
+		} catch (Exception e) {
 			return new Session("localhost",5984);
 			//throw new RuntimeException(e);
 		}		

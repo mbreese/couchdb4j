@@ -30,6 +30,12 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.params.HttpParams;
+import org.apache.http.params.BasicHttpParams;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
@@ -42,6 +48,7 @@ import org.apache.http.client.params.AllClientPNames;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 
@@ -60,7 +67,7 @@ import org.apache.http.protocol.HTTP;
  * @author brennanjubb - HTTP-Auth username/pass
  */
 public class Session {
-	private static final String DEFAULT_CHARSET = HTTP.UTF_8;
+	private static final String DEFAULT_CHARSET = "UTF-8";
 
 	private static final String MIME_TYPE_JSON = "application/json";
 	
@@ -75,6 +82,7 @@ public class Session {
 	protected CouchResponse lastResponse;
 	
 	protected HttpClient httpClient;
+    protected HttpParams httpParams;
 
 	/**
 	 * Constructor for obtaining a Session with an HTTP-AUTH username/password and (optionally) a secure connection
@@ -92,8 +100,15 @@ public class Session {
 		this.pass = pass;
 		this.usesAuth = usesAuth;
 		this.secure = secure;
-		
-		DefaultHttpClient defaultClient = new DefaultHttpClient();
+
+        httpParams = new BasicHttpParams();
+        SchemeRegistry schemeRegistry = new SchemeRegistry();
+
+        schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+        schemeRegistry.register(new Scheme("https", SSLSocketFactory.getSocketFactory(), 443));
+
+        ThreadSafeClientConnManager connManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
+		DefaultHttpClient defaultClient = new DefaultHttpClient(connManager, httpParams);
 		if (user != null) {
 			defaultClient.getCredentialsProvider().setCredentials( AuthScope.ANY, new UsernamePasswordCredentials(user, pass) );
 		}
@@ -379,7 +394,7 @@ public class Session {
 	 * @return the CouchResponse (status / error / json document)
 	 */
 	protected CouchResponse http(HttpRequestBase req) {
-		
+
 		HttpResponse httpResponse = null;
 		HttpEntity entity = null;
 		
@@ -415,17 +430,17 @@ public class Session {
 	
 	public void setUserAgent(String ua)
 	{
-		this.httpClient.getParams().setParameter(AllClientPNames.USER_AGENT, ua);
+		httpParams.setParameter(AllClientPNames.USER_AGENT, ua);
 	}
 	
 	public void setConnectionTimeout(int milliseconds)
 	{
-		httpClient.getParams().setIntParameter(AllClientPNames.CONNECTION_TIMEOUT, milliseconds);
+		httpParams.setIntParameter(AllClientPNames.CONNECTION_TIMEOUT, milliseconds);
 	}
 	
 	public void setSocketTimeout(int milliseconds)
 	{
-		httpClient.getParams().setIntParameter(AllClientPNames.SO_TIMEOUT, milliseconds);
+		httpParams.setIntParameter(AllClientPNames.SO_TIMEOUT, milliseconds);
 	}
 
 	protected String encodeParameter(String paramValue) {
