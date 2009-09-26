@@ -99,9 +99,15 @@ public class CouchResponse {
 				(isPost && statusCode==201) ||
 				(isDelete && statusCode==202) ||
 		    (isDelete && statusCode==200)) {
-				ok = JSONObject.fromObject(body).getBoolean("ok");
-			
-		} else if ( (req instanceof HttpGet) || ( (req instanceof HttpPost) && statusCode==200 ) ) {
+
+      if (path.endsWith("_bulk_docs")) { // Handle bulk doc update differently
+        ok = JSONArray.fromObject(body).size() > 0;
+      }
+      else {
+        ok = JSONObject.fromObject(body).getBoolean("ok");
+      }
+
+    } else if ( (req instanceof HttpGet) || ( (req instanceof HttpPost) && statusCode==200 ) ) {
 			ok=true;
 		}
 		log.debug(toString());
@@ -119,7 +125,8 @@ public class CouchResponse {
 	 * Retrieves the body of the request as a JSONArray object. (such as listing database names)
 	 * @return
 	 */
-	public JSONArray getBodyAsJSONArray() {		
+	public JSONArray getBodyAsJSONArray() {
+    if (body == null) return null;
 		return JSONArray.fromObject(body);
 	}
 
@@ -157,12 +164,14 @@ public class CouchResponse {
 	 * Returns the body of the response as a JSON Object (such as for a document)
 	 * @return
 	 */
-	public JSONObject getBodyAsJSON() {
+	public JSONObject getBodyAsJSONObject() {
 		if (body==null) {
 			return null;
 		}
 		return JSONObject.fromObject(body);
 	}
+
+
 
 	/**
 	 * Retrieves a specific header from the response (not really used anymore)

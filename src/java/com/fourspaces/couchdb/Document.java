@@ -22,8 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import com.fourspaces.couchdb.util.JSONUtils;
+import net.sf.json.*;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -59,6 +59,9 @@ import org.apache.commons.logging.LogFactory;
 @SuppressWarnings("unchecked")
 public class Document implements Map {
 	Log log = LogFactory.getLog(Document.class);
+
+  public static final String REVISION_HISTORY_PROP = "_revisions";
+
 	protected Database database=null;
 	protected JSONObject object;
 	
@@ -79,8 +82,8 @@ public class Document implements Map {
 		this.object = obj;
 		loaded=true;
 	}
-	
-	/**
+
+  /**
 	 * Load data into this document from a differing JSONObject 
 	 * <p>
 	 * This is mainly for reloading data for an object that was retrieved from a view.  This version
@@ -149,7 +152,7 @@ public class Document implements Map {
 			populateRevisions();
 		} 
 		//System.out.println(object);
-		JSONArray ar = object.getJSONArray("_revs");
+		JSONArray ar = object.getJSONObject(REVISION_HISTORY_PROP).getJSONArray("ids");
 		if (ar!=null) {
 			revs = new String[ar.size()];
 			for (int i=0 ; i< ar.size(); i++) {
@@ -180,7 +183,7 @@ public class Document implements Map {
 	 * <p>
 	 * This isn't persisted until the document is saved.
 	 * 
-	 * @param design document name
+	 * @param designDoc document name
 	 * @param viewName
 	 * @param function
 	 * @return
@@ -188,10 +191,13 @@ public class Document implements Map {
 	public View addView(String designDoc, String viewName, String function) {
 		object.put("_id", "_design/"+ designDoc); //Not sure if _id or id should be used
 		object.put("language", "javascript"); //FIXME specify language
-        
-		JSONObject funcs = new JSONObject();
-		funcs.put("map", function);
 
+    JSONObject funcs = new JSONObject();
+//    System.err.println("JSON String: " + JSONUtils.stringSerializedFunction(function));
+//    funcs.put("map", JSONUtils.stringSerializedFunction(function));
+    funcs.accumulate("map", JSONUtils.stringSerializedFunction(function));
+
+    System.err.println("FUNCS: " + funcs.toString());
 
 		JSONObject viewMap = new JSONObject();
 		viewMap.put(viewName, funcs);

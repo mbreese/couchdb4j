@@ -4,4 +4,8 @@
 build/
 dist/
 test.log
-
+*.ipr
+*.iml
+*.iws
+.idea
+target/

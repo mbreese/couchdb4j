@@ -50,7 +50,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
 
 /**
  * The Session is the main connection to the CouchDB instance.  However, you'll only use the Session
@@ -201,7 +200,7 @@ public class Session {
 	public Database getDatabase(String name) {
 		CouchResponse resp = get(name);
 		if (resp.isOk()) {
-			return new Database(resp.getBodyAsJSON(),this);
+			return new Database(resp.getBodyAsJSONObject(),this);
 		} else {
 			log.warn("Error getting database: "+name);
 		}
@@ -390,7 +389,7 @@ public class Session {
 	 * This returns a CouchResponse, which can be used to get the status of the call (isOk), 
 	 * and any headers / body that was sent back.
 	 * 
-	 * @param method
+	 * @param req
 	 * @return the CouchResponse (status / error / json document)
 	 */
 	protected CouchResponse http(HttpRequestBase req) {
