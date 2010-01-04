@@ -195,7 +195,10 @@ public class Database {
           .key("map").value(JSONUtils.stringSerializedFunction(view.getFunction()))
         .endObject()
         .toString();
-    CouchResponse resp = session.post(name + "/_temp_view", adHocBody);
+    
+    // Bugfix - include query string for adhoc views to support
+    // additional view options (setLimit, etc)
+    CouchResponse resp = session.post(name + "/_temp_view", adHocBody, view.getQueryString());
     if (resp.isOk()) {
       ViewResults results = new ViewResults(view, resp.getBodyAsJSONObject());
       results.setDatabase(this);

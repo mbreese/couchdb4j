@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.fourspaces.couchdb.AdHocView;
 import com.fourspaces.couchdb.Database;
 import com.fourspaces.couchdb.Document;
 import com.fourspaces.couchdb.Session;
@@ -52,6 +53,32 @@ public class ViewTest {
 
 
   }
+ 
+  
+  /**
+   * Test to demonstrate that the query string isn't being passed for adhoc
+   * views.
+   */
+  @Test
+  public void adhoc_query_string() {
+	  
+	  // Establish that all results are returned with our view
+	  int all = foo.getAllDocuments().getResults().size();
+	  AdHocView view = new AdHocView("function (doc) { emit(null, doc);}");
+	  ViewResults results = foo.adhoc(view);
+	  assertNotNull(results);
+	  assertEquals( "Expected results to return all records", all, results.getResults().size() );
+	
+	  // Now set a limit on the number of results that may be returned
+	  // and verify that only that number of results are returned.
+	  view.setLimit(2);
+	  results = foo.adhoc(view);
+	  
+	  assertNotNull(results);
+	  assertEquals( "Expected a subset of records to be returned", 2, results.getResults().size() );
+	 
+	  
+  }	
 
   @Test
   public void adhoc2() {
