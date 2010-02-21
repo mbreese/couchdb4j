@@ -53,7 +53,6 @@ public class CouchResponse {
 	private Header[] headers;
 	private int statusCode;
 	private String methodName;
-	
 	boolean ok = false;
 
 	private String error_id;
@@ -72,7 +71,7 @@ public class CouchResponse {
 		
 		HttpEntity entity = response.getEntity();
 		body = EntityUtils.toString(entity);
-		
+
 		path = req.getURI().getPath();
 
 		statusCode = response.getStatusLine().getStatusCode();
@@ -186,4 +185,8 @@ public class CouchResponse {
 		}
 		return null;
 	}
+        
+        public String getBody() {
+            return body;
+        }
 }

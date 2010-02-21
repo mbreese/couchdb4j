@@ -28,13 +28,15 @@ package com.fourspaces.couchdb;
  *
  */
 public class View {
+	protected String key;
 	protected String startKey;
 	protected String endKey;
 	protected Integer limit;
 	protected Boolean update;
 	protected Boolean reverse;
 	protected String skip;
-        protected Boolean group;
+    protected Boolean group;
+	protected Boolean includeDocs;
 	
 	protected String name;
 	protected Document document;
@@ -85,6 +87,10 @@ public class View {
 	 */
 	public String getQueryString() {
 		String queryString = "";
+		if (key!=null) {
+			if (!queryString.equals("")) { queryString+="&"; }
+			queryString+="key="+key;
+		}
 		if (startKey!=null) {
 			if (!queryString.equals("")) { queryString+="&"; }
 			queryString+="startkey="+startKey;
@@ -104,6 +110,10 @@ public class View {
 		if (update!=null && update.booleanValue()) {
 			if (!queryString.equals("")) { queryString+="&"; }
 			queryString+="update=true";
+		}
+		if (includeDocs!=null && includeDocs.booleanValue()) {
+			if (!queryString.equals("")) { queryString+="&"; }
+			queryString+="include_docs=true";
 		}
 		if (reverse!=null && reverse.booleanValue()) {
 			if (!queryString.equals("")) { queryString+="&"; }
@@ -126,6 +136,10 @@ public class View {
 		//this.count = count;
 		setLimit(count);
 	}
+
+        public void setKey(String key) {
+          this.key = key;
+        }
 
         public void setLimit(Integer limit) {
           this.limit = limit;
@@ -176,6 +190,10 @@ public class View {
 		this.update = update;
 	}
 
+    public void setWithDocs(Boolean withDocs) {
+		this.includeDocs = includeDocs;
+	}
+	
 	/**
 	 * The name for this view (w/o doc id)
 	 * @return

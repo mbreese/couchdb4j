@@ -101,6 +101,19 @@ public class Database {
   }
 
   /**
+   * Gets all design documents
+   *
+   * @return ViewResults - all design docs
+   */     
+  public ViewResults getAllDesignDocuments() {
+      View v = new View("_all_docs");
+      v.startKey = "%22_design%2F%22";
+      v.endKey = "%22_design0%22";
+      v.includeDocs = Boolean.TRUE;
+      return view(v, false);
+  }
+
+  /**
    * Runs the standard "_all_docs" view on this database, with count
    *
    * @return ViewResults - the results of the view... this can be iterated over to get each document.
@@ -381,4 +394,30 @@ public class Database {
 		}
 		
 	}
+	
+  /**
+   * Gets attachment
+   *
+   * @param id
+   * @param attachment attachment body
+   * @return attachment body
+   */
+    public String getAttachment(String id, String attachment) throws IOException {
+        CouchResponse resp = session.get(name + "/" + urlEncodePath(id) + "/" + attachment);
+        return resp.getBody();
+    }
+
+  /**
+   * Puts attachment to the doc
+   *
+   * @param id
+   * @param fname attachment name
+   * @param ctype content type
+   * @param attachment attachment body
+   * @return was the delete successful?
+   */
+    public String putAttachment(String id, String fname, String ctype, String attachment) throws IOException {
+        CouchResponse resp = session.put(name + "/" + urlEncodePath(id) + "/" + fname, ctype, attachment);
+        return resp.getBody();
+    }
 }

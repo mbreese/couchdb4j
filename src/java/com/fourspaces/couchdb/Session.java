@@ -350,7 +350,24 @@ public class Session {
 		}
 		return http(put);
 	}
-
+	
+	/**
+	 * Overloaded Put using by attachments
+	 */
+	CouchResponse put(String url, String ctype, String content) {
+		HttpPut put = new HttpPut(buildUrl(url));
+		if (content!=null) {
+			HttpEntity entity;
+			try {
+				entity = new StringEntity(content, DEFAULT_CHARSET);
+				put.setEntity(entity);
+				put.setHeader(new BasicHeader("Content-Type", ctype));
+			} catch (UnsupportedEncodingException e) {
+				log.error(ExceptionUtils.getStackTrace(e));
+			}
+		}
+		return http(put);
+	}
 	/**
 	 * Send a GET request
 	 * @param url
