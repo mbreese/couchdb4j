@@ -191,7 +191,7 @@ public class View {
 	}
 
     public void setWithDocs(Boolean withDocs) {
-		this.includeDocs = includeDocs;
+		this.includeDocs = withDocs;
 	}
 	
 	/**
