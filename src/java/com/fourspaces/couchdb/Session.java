@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -468,5 +469,66 @@ public class Session {
 		{
 			throw new RuntimeException(e);
 		}	
+	}
+	
+	/**
+	 * This method will retrieve a list of replication tasks that are currently running under the couch server this 
+	 * session is attached to.
+	 * 
+	 * @return List of replication tasks running on the server.
+	 */
+	public List<ReplicationTask> getReplicationTasks() {
+		final List<ReplicationTask> replicationTasks = new ArrayList<ReplicationTask>();
+		CouchResponse resp = get("_active_tasks");
+		JSONArray ar = resp.getBodyAsJSONArray();
+		
+		for(int i = 0; i < ar.size(); i++) {
+			final JSONObject task = ar.getJSONObject(i);
+			
+			if(ReplicationTask.TASK_TYPE.equals(task.getString(CouchTask.TASK_TYPE_KEY))) {
+				final ReplicationTask replicationTask = new ReplicationTask(task.getString(CouchTask.TASK_TASK_KEY), 
+						task.getString(CouchTask.TASK_STATUS_KEY), task.getString(CouchTask.TASK_PID_KEY));
+				
+				if(replicationTask.loadDetailsFromTask() == true) {
+					replicationTasks.add(replicationTask);
+				} else {
+					log.error("Unable to load replication task details from server response.");
+				}
+			} else {
+				log.trace("Ignoring non-replication task.");
+			}
+		}
+		
+		log.trace("Found " + replicationTasks.size() + " replication tasks");
+		
+		return replicationTasks;
+	}
+	
+	/**
+	 * This method will attempt to start the replication task on the couch server instance this session is attached to.
+	 * 
+	 * @param task Task to start on the server
+	 * @return True if the task was accepted by the couch server instance; False otherwise
+	 */
+	public boolean postReplicationTask(final ReplicationTask task) {
+		final String postUrl = buildUrl("_replicate");
+		
+		try {
+			
+			log.trace("Post URL: " + postUrl);
+			
+			final JSONObject replicateReq = task.getCreateRequest();
+			
+			log.trace(replicateReq.toString());
+			
+			CouchResponse resp = post("_replicate", replicateReq.toString());
+			
+			return (resp.getErrorId() == null);
+		} catch(Exception e) {
+			System.out.println("Exception while attempting post" + e);
+			e.printStackTrace();
+			
+		}
+		return false;
 	}
 }
