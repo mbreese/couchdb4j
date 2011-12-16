@@ -525,8 +525,7 @@ public class Session {
 			
 			return (resp.getErrorId() == null);
 		} catch(Exception e) {
-			System.out.println("Exception while attempting post" + e);
-			e.printStackTrace();
+			log.info("Exception while attempting to post replication task." + e);
 			
 		}
 		return false;

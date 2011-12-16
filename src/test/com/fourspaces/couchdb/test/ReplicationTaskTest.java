@@ -1,5 +1,18 @@
 /**
- * Copyright (c) 2011 Cummings Engineering Consultants, Inc. All Rights Reserved
+ * Copyright (c) 2011 Cummings Engineering Consultants, Inc. 
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * 		http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  */
 package com.fourspaces.couchdb.test;
 
@@ -52,7 +65,7 @@ public class ReplicationTaskTest {
 	 */
 	@Test
 	public void testLoadDetailsFromTask() {
-		final String task = "e9db21: shard_1_entity_db -> http://192.168.4.20:5984/shard_1_entity_db/";
+		final String task = "e9db21: testDb -> http://10.11.12.13:5984/testDb/";
 		final String status = "MR Processed source update #594";
 		final String pid = "<0.201.0>";
 		
@@ -64,13 +77,13 @@ public class ReplicationTaskTest {
 		assertEquals(pid, repTask.getPid());
 		assertNotNull(repTask.getSource());
 		assertFalse(repTask.getSource().isRemote());
-		assertEquals("shard_1_entity_db", repTask.getSource().getReplicatedEntity());
+		assertEquals("testDb", repTask.getSource().getReplicatedEntity());
 		
 		assertNotNull(repTask.getDestination());
 		assertTrue(repTask.getDestination().isRemote());
-		assertEquals("192.168.4.20", repTask.getDestination().getServer());
+		assertEquals("10.11.12.13", repTask.getDestination().getServer());
 		assertEquals("5984", Integer.toString(repTask.getDestination().getPort()));
-		assertEquals("shard_1_entity_db", repTask.getDestination().getReplicatedEntity());
+		assertEquals("testDb", repTask.getDestination().getReplicatedEntity());
 		
 	}
 
