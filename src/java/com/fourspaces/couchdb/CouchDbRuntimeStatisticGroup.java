@@ -1,20 +1,18 @@
 /*
- * Copyright (c) 2012 Cummings Engineering Consultants.  All Rights Reserved.
- *
- * This software is proprietary to, and a valuable trade secret of, Cummings 
- * Engineering Consultants.
- *
- * The software and documentation may not be copied, reproduced, translated, 
- * or reduced to any electronic medium or machine-readable form without a 
- * prior written agreement from Cummings Engineering Consultants.
+ * Copyright (c) 2012 Cummings Engineering Consultants, Inc. 
  * 
- *
- * UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING, THE SOFTWARE 
- * AND DOCUMENTATION ARE DISTRIBUTED ON AN "AS IS" BASIS, WITHOUT WARRANTIES 
- * OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING BUT NOT 
- * LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
- * PURPOSE AND NONINFRINGEMENT.  REFER TO THE WRITTEN AGREEMENT FOR SPECIFIC 
- * LANGUAGE GOVERNING PERMISSIONS AND LIMITATIONS.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * 		http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
  */
 package com.fourspaces.couchdb;
 
