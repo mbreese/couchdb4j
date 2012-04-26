@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -529,5 +532,56 @@ public class Session {
 			
 		}
 		return false;
+	}
+	
+	/**
+	 * Retrieve a map of all runtime statistics from the connected CouchDB.
+	 * 
+	 * @return Map corresponding to a Java representation of the _stats JSON.
+	 */
+	public Map<String, Map<String, CouchDbRuntimeStatisticGroup>> getRuntimeStatistics() {
+		try {
+			CouchResponse resp = get("_stats");
+			JSONObject obj = resp.getBodyAsJSONObject();
+			
+			Map<String, Map<String, CouchDbRuntimeStatisticGroup>> map = new HashMap<String, Map<String, CouchDbRuntimeStatisticGroup>>();
+
+			map.put("couchdb", runtimeStatisticsProcess(obj.getJSONObject("couchdb")));
+			map.put("httpd", runtimeStatisticsProcess(obj.getJSONObject("httpd")));
+			map.put("httpd_request_methods", runtimeStatisticsProcess(obj.getJSONObject("httpd_request_methods")));
+			map.put("httpd_status_codes", runtimeStatisticsProcess(obj.getJSONObject("httpd_status_codes")));
+
+			return map;
+		} catch (Exception e) {
+			log.info("Exception while attempting to retrieve runtime statistics." + e);
+			return Collections.emptyMap();
+		}
+	}
+	
+	/**
+	 * Convert a JSON statistics object into a map of groups.
+	 * 
+	 * @param list
+	 * @param jsonObject
+	 */
+	private Map<String, CouchDbRuntimeStatisticGroup> runtimeStatisticsProcess(JSONObject ob) {
+		Map<String, CouchDbRuntimeStatisticGroup> map = new HashMap<String, CouchDbRuntimeStatisticGroup>();
+		
+		for(Object key : ob.keySet()) {
+			CouchDbRuntimeStatisticGroup sg = new CouchDbRuntimeStatisticGroup();
+			String keyName = String.valueOf(key);
+			JSONObject subObject = ob.getJSONObject(keyName);
+
+			map.put(keyName, sg);
+			sg.description=subObject.getString("description");
+			sg.current=subObject.optInt("current");
+			sg.sum=subObject.optInt("sum");
+			sg.mean=subObject.optDouble("mean");
+			sg.stddev=subObject.optDouble("stddev");
+			sg.min=subObject.optInt("min");
+			sg.max=subObject.optInt("max");
+		}
+		
+		return map;
 	}
 }

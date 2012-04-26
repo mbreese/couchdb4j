@@ -7,7 +7,7 @@ http://maven.apache.org/maven-v4_0_0.xsd">
     <groupId>couchdb4j</groupId>
     <artifactId>couchdb4j</artifactId>
     <name>CouchDB4J</name>
-    <version>0.3.0-i386-1</version>
+    <version>0.3.0-i386-2</version>
     <url>http://code.google.com/p/couchdb4j/</url>
 
     <build>
@@ -104,7 +104,7 @@ http://maven.apache.org/maven-v4_0_0.xsd">
         <repository>
             <id>nexus</id>
             <name>My Nexus</name>
-            <url>http://localhost:8081/nexus/content/repositories/thirdparty/</url>
-        </repository>
+            <url>http://localhost:8081/nexus/content/repositories/thirdparty/</url>            
+        </repository>        
     </distributionManagement>
 </project>

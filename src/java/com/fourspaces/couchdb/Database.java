@@ -420,4 +420,16 @@ public class Database {
         CouchResponse resp = session.put(name + "/" + urlEncodePath(id) + "/" + fname, ctype, attachment);
         return resp.getBody();
     }
+    
+    /**
+     * Orders the compaction of the database. This method may take considerable time to complete.
+     * @return 
+     * 
+     * @throws IOException
+     */
+    public String compact() throws IOException {
+    	CouchResponse resp;
+    	resp = session.post(name + "/" + "_compact", "bogusDataToForceJson");
+    	return resp.getBody();
+    }
 }
