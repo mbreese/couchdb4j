@@ -233,10 +233,11 @@ public class Database {
    * <p/>
    * Either way, a new _id and _rev are retrieved and updated in the Document object
    *
-   * @param doc
-   * @param docId
+   * @param doc - Document with data
+   * @param docId - the document ID
+   * @return Document - the document with the docId and rev
    */
-  public void saveDocument(Document doc, String docId) throws IOException {
+  public Document saveDocument(Document doc, String docId) throws IOException {
     CouchResponse resp;
     if (docId == null || docId.equals("")) {
       resp = session.post(name, doc.getJSONObject().toString());
@@ -256,22 +257,24 @@ public class Database {
         e.printStackTrace();
       }
       doc.setDatabase(this);
-    }
-    else {
+    } else {
       log.warn("Error adding document - " + resp.getErrorId() + " " + resp.getErrorReason());
       System.err.println("RESP: " + resp);
-    }
+    } 
+    
+    return doc;
   }
 
   /**
    * Save a document w/o specifying an id (can be null)
    *
    * @param doc
+   * @return Document wuth generated ID and _rev
    */
   public void saveDocument(Document doc) throws IOException {
-    saveDocument(doc, doc.getId());
+    return saveDocument(doc, doc.getId());
   }
-
+  
   public void bulkSaveDocuments(Document[] documents) throws IOException {
     CouchResponse resp = null;
 
