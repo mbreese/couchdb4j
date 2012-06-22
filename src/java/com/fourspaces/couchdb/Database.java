@@ -271,11 +271,11 @@ public class Database {
    * @param doc
    * @return Document wuth generated ID and _rev
    */
-  public void saveDocument(Document doc) throws IOException {
+  public Document saveDocument(Document doc) throws IOException {
     return saveDocument(doc, doc.getId());
   }
   
-  public void bulkSaveDocuments(Document[] documents) throws IOException {
+  public Document[] bulkSaveDocuments(Document[] documents) throws IOException {
     CouchResponse resp = null;
 
     resp = session.post(name + "/_bulk_docs", new JSONObject().accumulate("docs", documents).toString());
@@ -306,6 +306,8 @@ public class Database {
     else {
       log.warn("Error bulk saving documents - " + resp.getErrorId() + " " + resp.getErrorReason());
     }
+    
+    return documents;
   }
 
   /**
