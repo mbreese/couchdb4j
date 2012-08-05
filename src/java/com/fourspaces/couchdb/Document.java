@@ -209,6 +209,48 @@ public class Document implements Map {
 	}
 	
 	/**
+	 * Adds an update handler to the document and sets the document ID to that of a design 
+	 * document. If the function name key already exists within the "updates" element it will 
+	 * be overwritten. The document must be saved for the change to persist. 
+	 * @author rwilson
+	 * @param designDoc
+	 * @param functionName
+	 * @param function
+	 */
+	public void addUpdateHandler(String designDoc, String functionName, String function) {
+	  object.put("_id", "_design/"+ designDoc); 
+    
+	  if (object.has("updates")) {
+      JSONObject updates = object.getJSONObject("updates");
+      updates.put(functionName, JSONUtils.stringSerializedFunction(function));
+    } else {
+      JSONObject func = new JSONObject();
+      func.put(functionName, JSONUtils.stringSerializedFunction(function));
+      object.put("updates", func);
+    }
+	}
+	
+	/**
+	 * Adds an update handler to the document. The ID of the document is not modified. If the function 
+	 * name key already exists within the "updates" element it will be overwritten. The document 
+	 * must be saved for the change to persist.
+	 * @author rwilson
+	 * @param functionName
+	 * @param function
+	 * @return
+	 */
+	public void addUpdateHandler(String functionName, String function) {
+	  if (object.has("updates")) {
+	    JSONObject updates = object.getJSONObject("updates");
+	    updates.put(functionName, JSONUtils.stringSerializedFunction(function));
+	  } else {
+	    JSONObject func = new JSONObject();
+	    func.put(functionName, JSONUtils.stringSerializedFunction(function));
+	    object.put("updates", func);
+	  }
+	}	
+	
+	/**
 	 * Removes a view from this document.
 	 * <p>
 	 * This isn't persisted until the document is saved.

@@ -17,7 +17,6 @@
 package com.fourspaces.couchdb;
 
 import java.io.IOException;
-
 import com.fourspaces.couchdb.util.JSONUtils;
 import static com.fourspaces.couchdb.util.JSONUtils.urlEncodePath;
 import net.sf.json.*;
@@ -45,6 +44,7 @@ public class Database {
 
   private static final String VIEW = "/_view/";
   private static final String DESIGN = "_design/";
+  private static final String UPDATE = "/_update/";
 
 
   /**
@@ -414,10 +414,82 @@ public class Database {
    * @param fname attachment name
    * @param ctype content type
    * @param attachment attachment body
-   * @return was the delete successful?
+   * @return was the PUT successful?
    */
     public String putAttachment(String id, String fname, String ctype, String attachment) throws IOException {
         CouchResponse resp = session.put(name + "/" + urlEncodePath(id) + "/" + fname, ctype, attachment);
         return resp.getBody();
     }
+    
+  /**
+   * Update an existing document using a document update handler. Returns false if there is a failure
+   * making the PUT/POST or there is a problem with the CouchResponse.
+   * @author rwilson
+   * @param update
+   * @return
+   */
+    public boolean updateDocument(Update update) {
+      if ((update == null) || (update.getDocId() == null) || (update.getDocId().equals(""))) {
+        return false;
+      }
+      
+      String url = null;
+      
+      String[] elements = update.getName().split("/");
+      url = this.name + "/" + ((elements.length < 2) ? elements[0] : DESIGN + elements[0] + UPDATE + elements[1]) + "/" + update.getDocId();
+      
+      if (update.getMethodPOST()) {
+        try { 
+          // Invoke the POST method passing the parameters in the body
+          CouchResponse resp = session.post(url, "application/x-www-form-urlencoded", update.getURLFormEncodedString(), null);
+          return resp.isOk();
+        } catch (Exception e) {
+          return false;
+        }        
+      } else {
+        try {
+          // Invoke the PUT method passing the parameters as a query string
+          CouchResponse resp = session.put(url, null, null, update.getQueryString());
+          return resp.isOk();
+        } catch (Exception e) {
+          return false;
+        }        
+      }
+    }
+    
+    /**
+     * Update an existing document using a document update handler and return the message body.
+     * Returns null if the is problem with the PUT/POST or CouchResponse.
+     * @author rwilson
+     * @param update
+     * @return
+     */
+      public String updateDocumentWithResponse(Update update) {
+        if ((update == null) || (update.getDocId() == null) || (update.getDocId().equals(""))) {
+          return "";
+        }
+        
+        String url = null;
+        
+        String[] elements = update.getName().split("/");
+        url = this.name + "/" + ((elements.length < 2) ? elements[0] : DESIGN + elements[0] + UPDATE + elements[1]) + "/" + update.getDocId();
+        
+        if (update.getMethodPOST()) {
+          try {
+            // Invoke the POST method passing the parameters in the body
+            CouchResponse resp = session.post(url, "application/x-www-form-urlencoded", update.getURLFormEncodedString(), null);
+            return resp.getBody();
+          } catch (Exception e) {
+            return null;
+          }
+        } else {
+          try {
+            // Invoke the PUT method passing the parameters as a query string
+            CouchResponse resp = session.put(url, null, null, update.getQueryString());
+            return resp.getBody();
+          } catch (Exception e) {
+            return null;
+          }
+        }
+      }
 }

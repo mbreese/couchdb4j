@@ -1,6 +1,7 @@
 .classpath
 .project
 .svn
+.settings
 build/
 dist/
 test.log
