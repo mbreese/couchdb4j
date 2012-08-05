@@ -324,6 +324,33 @@ public class Session {
 	}
 	
 	/**
+	 * Send a POST with a body, query string and specified content type
+	 * @author rwilson 
+	 * @param url
+	 * @param ctype
+	 * @param content
+	 * @param queryString
+	 * @return
+	 */
+	CouchResponse post(String url, String ctype, String content, String queryString) {
+	  HttpPost post = new HttpPost(buildUrl(url, queryString));
+	  if (content!=null) {
+	    HttpEntity entity;
+			try {
+			  entity = new StringEntity(content, DEFAULT_CHARSET);
+				post.setEntity(entity);
+				if (ctype != null) {
+				  post.setHeader(new BasicHeader("Content-Type", ctype));
+				}
+			} catch (UnsupportedEncodingException e) {
+				log.error(ExceptionUtils.getStackTrace(e));
+			}
+		}
+		
+		return http(post);
+	}
+	
+	/**
 	 * Send a PUT  (for creating databases)
 	 * @param url
 	 * @return
@@ -369,6 +396,33 @@ public class Session {
 		}
 		return http(put);
 	}
+	
+	/**
+	 * Overloaded Put using by attachments and query string
+	 * @author rwilson
+	 * @param url
+	 * @param ctype
+	 * @param content
+	 * @param queryString
+	 * @return
+	 */
+	CouchResponse put(String url, String ctype, String content, String queryString) {
+		HttpPut put = new HttpPut(buildUrl(url, queryString));
+		if (content!=null) {
+			HttpEntity entity;
+			try {
+				entity = new StringEntity(content, DEFAULT_CHARSET);
+				put.setEntity(entity);
+				if (ctype!=null) {
+					put.setHeader(new BasicHeader("Content-Type", ctype));
+				}
+			} catch (UnsupportedEncodingException e) {
+				log.error(ExceptionUtils.getStackTrace(e));
+			}
+		}
+		return http(put);
+	}
+	
 	/**
 	 * Send a GET request
 	 * @param url
