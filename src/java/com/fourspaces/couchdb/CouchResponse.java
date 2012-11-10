@@ -115,10 +115,8 @@ public class CouchResponse {
 	}
 
    /**
-    * C-tor parses the method results to build the CouchResponse object.
-    * First, it reads the body (hence the IOException) from the method
-    * Next, it checks the status codes to determine if the request was successful.
-    * If there was an error, it parses the error codes.
+    * C-tor that handles exceptions from the HTTP client
+    *
     * @param req Original HTTP request to couchdb server
     * @param exception Exception thrown during request to server
     * @throws IOException
