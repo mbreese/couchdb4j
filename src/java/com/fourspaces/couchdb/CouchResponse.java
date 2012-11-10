@@ -57,6 +57,8 @@ public class CouchResponse {
 
 	private String error_id;
 	private String error_reason;
+
+   private static final String EXCEPTION_ID = "exception";
 	
 	/**
 	 * C-tor parses the method results to build the CouchResponse object.
@@ -111,6 +113,25 @@ public class CouchResponse {
 		}
 		log.debug(toString());
 	}
+
+   /**
+    * C-tor parses the method results to build the CouchResponse object.
+    * First, it reads the body (hence the IOException) from the method
+    * Next, it checks the status codes to determine if the request was successful.
+    * If there was an error, it parses the error codes.
+    * @param req Original HTTP request to couchdb server
+    * @param exception Exception thrown during request to server
+    * @throws IOException
+    */
+   CouchResponse(HttpRequestBase req, Exception exception) {
+      headers = new Header[0];
+      body = "";
+      path = req.getURI().getPath();
+
+      this.error_id = EXCEPTION_ID;
+      this.error_reason = exception.getMessage();
+      ok=false;
+   }
 
 	@Override
 	/**
