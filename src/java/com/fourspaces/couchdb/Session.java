@@ -477,6 +477,7 @@ public class Session {
 			entity = httpResponse.getEntity();
 			lastResponse = new CouchResponse(req, httpResponse);
 		} catch (IOException e) {
+         lastResponse = new CouchResponse(req, e);
 			log.error(ExceptionUtils.getStackTrace(e));
 		} finally {
 			  if (entity != null) {
@@ -503,6 +504,11 @@ public class Session {
 	{
 		httpParams.setParameter(AllClientPNames.USER_AGENT, ua);
 	}
+
+   public void setHttpClient(HttpClient httpClient)
+   {
+      this.httpClient = httpClient;
+   }
 	
 	public void setConnectionTimeout(int milliseconds)
 	{
