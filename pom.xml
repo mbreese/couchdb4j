@@ -28,7 +28,7 @@ http://maven.apache.org/maven-v4_0_0.xsd">
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.5</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
